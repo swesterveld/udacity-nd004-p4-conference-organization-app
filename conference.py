@@ -304,6 +304,7 @@ class ConferenceApi(remote.Service):
             q = q.filter(formatted_query)
         return q
 
+    def _formatFilters(self, filters):
         """Parse, check validity and format user supplied filters."""
         formatted_filters = []
         inequality_field = None
