@@ -80,6 +80,34 @@ class ConferenceForms(messages.Message):
     """ConferenceForms -- multiple Conference outbound form message"""
     items = messages.MessageField(ConferenceForm, 1, repeated=True)
 
+class Session(ndb.Model):
+    """Session -- Session object"""
+    name            = ndb.StringProperty(required=True)
+    highlights      = ndb.StringProperty()
+    speaker         = ndb.StringProperty()
+    duration        = ndb.IntegerProperty()
+    typeOfSession   = ndb.StringProperty(default='NOT_SPECIFIED')
+    date            = ndb.DateProperty()
+    startTime       = ndb.TimeProperty()
+    websafeConferenceKey = ndb.StringProperty(required=True)
+
+class SessionForm(messages.Message):
+    """SessionForm == Session outbound form message"""
+    name            = messages.StringField(1)
+    highlights      = messages.StringField(2)
+    speaker         = messages.StringField(3)
+    duration        = messages.IntegerField(4)
+    typeOfSession   = messages.EnumField('SessionType', 5)
+    date            = messages.StringField(6)
+    startTime       = messages.StringField(7)
+    websafeConferenceKey = messages.StringField(8)
+    websafeKey      = messages.StringField(9)
+
+class SessionForms(messages.Message):
+    """SessionForms -- multiple Session outbound form message"""
+    items = messages.MessageField(SessionForm, 1, repeated=True)
+
+
 class TeeShirtSize(messages.Enum):
     """TeeShirtSize -- t-shirt size enumeration value"""
     NOT_SPECIFIED = 1
@@ -97,6 +125,15 @@ class TeeShirtSize(messages.Enum):
     XXL_W = 13
     XXXL_M = 14
     XXXL_W = 15
+
+class SessionType(messages.Enum):
+    """SessionType -- session type enumeration value"""
+    NOT_SPECIFIED = 1
+    WORKSHOP = 2
+    LECTURE = 3
+    KEYNOTE = 4
+    BREAK = 5
+    OPEN_SPACE = 6
 
 class ConferenceQueryForm(messages.Message):
     """ConferenceQueryForm -- Conference query inbound form message"""
