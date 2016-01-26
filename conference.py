@@ -98,6 +98,12 @@ SESSION_GET_REQUEST = endpoints.ResourceContainer(
     websafeConferenceKey=messages.StringField(1),
 )
 
+SESSION_GET_REQUEST_FILTERED = endpoints.ResourceContainer(
+    message_types.VoidMessage,
+    websafeConferenceKey=messages.StringField(1),
+    typeOfSession=messages.StringField(2),
+)
+
 SESSION_POST_REQUEST = endpoints.ResourceContainer(
     SessionForm,
     websafeConferenceKey=messages.StringField(1),
@@ -453,7 +459,7 @@ class ConferenceApi(remote.Service):
                       url='/tasks/send_confirmation_email')
         return request
 
-    def _getSessions(self, request):
+    def _getSessions(self, request, typeFilter=None):
         conf = ndb.Key(urlsafe=request.websafeConferenceKey)
 
         if not conf:
@@ -465,6 +471,9 @@ class ConferenceApi(remote.Service):
 
         sessions = Session.query(
             Session.websafeConferenceKey == request.websafeConferenceKey)
+
+        if typeFilter:
+            sessions = sessions.filter(Session.typeOfSession == typeFilter)
 
         return SessionForms(
             items=[self._copySessionToForm(session) for session in sessions]
@@ -478,10 +487,15 @@ class ConferenceApi(remote.Service):
         return all sessions"""
         return self._getSessions(websafeConferenceKey)
 
-    def getConferenceSessionsByType(self, websafeConferenceKey, typeOfSession):
-        """Given a conference with a websafeCofnerenceKey, return all sessions
+    @endpoints.method(SESSION_GET_REQUEST_FILTERED, SessionForms,
+                      path='conference/{websafeConferenceKey}/sessions/type/{typeOfSession}',
+                      http_method='GET', name='getConferenceSessionsByType')
+    def getConferenceSessionsByType(self, request):
+        """Given a conference with a websafeConferenceKey, return all sessions
         of a specified type (eg lecture, keynote, workshop)"""
-        pass  # TODO: implement
+        # XXX Maybe prepare a filter to use for a generic version of
+        # _getSessions?
+        return self._getSessions(request, typeFilter=request.typeOfSession)
 
     def getSessionsBySpeaker(self, speaker):
         pass  # TODO: implement
