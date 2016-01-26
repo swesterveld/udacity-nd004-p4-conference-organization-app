@@ -104,6 +104,11 @@ SESSION_GET_REQUEST_FILTERED = endpoints.ResourceContainer(
     typeOfSession=messages.StringField(2),
 )
 
+SESSION_GET_REQUEST_SPEAKER = endpoints.ResourceContainer(
+    message_types.VoidMessage,
+    speaker=messages.StringField(1),
+)
+
 SESSION_POST_REQUEST = endpoints.ResourceContainer(
     SessionForm,
     websafeConferenceKey=messages.StringField(1),
@@ -472,6 +477,7 @@ class ConferenceApi(remote.Service):
         sessions = Session.query(
             Session.websafeConferenceKey == request.websafeConferenceKey)
 
+        # Apply filters, if any.
         if typeFilter:
             sessions = sessions.filter(Session.typeOfSession == typeFilter)
 
@@ -497,8 +503,23 @@ class ConferenceApi(remote.Service):
         # _getSessions?
         return self._getSessions(request, typeFilter=request.typeOfSession)
 
-    def getSessionsBySpeaker(self, speaker):
-        pass  # TODO: implement
+    @endpoints.method(SESSION_GET_REQUEST_SPEAKER, SessionForms,
+                      path='sessions/{speaker}',
+                      http_method='GET', name='getSessionsBySpeaker')
+    #def getSessionsBySpeaker(self, speaker):
+    def getSessionsBySpeaker(self, request):
+        """Given a speaker, return all sessions given by this particular
+        speaker, accross all conferences"""
+        sessions = Session.query()
+
+        filteredSessions = sessions.filter(
+            Session.speaker == request.speaker).fetch(
+                projection=[Session.name])
+
+        return SessionForms(
+            items=[self._copySessionToForm(session)
+                   for session in filteredSessions])
+        #return self._getSessions(request, speakerFilter=request.speaker)
 
     @endpoints.method(SessionForm, SessionForm,
                       path='conference/{websafeConferenceKey}/session',
