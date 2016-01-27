@@ -107,6 +107,21 @@ class SessionForms(messages.Message):
     """SessionForms -- multiple Session outbound form message"""
     items = messages.MessageField(SessionForm, 1, repeated=True)
 
+class Speaker(messages.Message):
+    """Speaker -- Speaker object"""
+    name = ndb.StringProperty(required=True)
+    twitter = ndb.StringProperty()
+    website = ndb.StringProperty()
+
+class SpeakerForm(messages.Message):
+    """SpeakerForm -- Speaker outbound form message"""
+    name = messages.StringField(1)
+    twitter = messages.StringField(2)
+    website = messages.StringField(3)
+
+class SpeakerForms(messages.Message):
+    """SpeakerForms -- multiple Speaker outbound form message"""
+    items = messages.MessageField(SpeakerForm, 1, repeated=True)
 
 class TeeShirtSize(messages.Enum):
     """TeeShirtSize -- t-shirt size enumeration value"""
