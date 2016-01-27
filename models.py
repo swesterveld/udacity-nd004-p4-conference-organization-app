@@ -92,7 +92,7 @@ class Session(ndb.Model):
     websafeConferenceKey = ndb.StringProperty(required=True)
 
 class SessionForm(messages.Message):
-    """SessionForm == Session outbound form message"""
+    """SessionForm -- Session outbound form message"""
     name            = messages.StringField(1)
     highlights      = messages.StringField(2)
     speaker         = messages.StringField(3)
@@ -109,13 +109,13 @@ class SessionForms(messages.Message):
 
 class Speaker(messages.Message):
     """Speaker -- Speaker object"""
-    name = ndb.StringProperty(required=True)
+    name    = ndb.StringProperty(required=True)
     twitter = ndb.StringProperty()
     website = ndb.StringProperty()
 
 class SpeakerForm(messages.Message):
     """SpeakerForm -- Speaker outbound form message"""
-    name = messages.StringField(1)
+    name    = messages.StringField(1)
     twitter = messages.StringField(2)
     website = messages.StringField(3)
 
