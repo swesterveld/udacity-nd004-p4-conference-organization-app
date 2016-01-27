@@ -84,24 +84,24 @@ class Session(ndb.Model):
     """Session -- Session object"""
     name            = ndb.StringProperty(required=True)
     highlights      = ndb.StringProperty()
-    speaker         = ndb.StringProperty()
     duration        = ndb.IntegerProperty()
     typeOfSession   = ndb.StringProperty(default='NOT_SPECIFIED')
     date            = ndb.DateProperty()
     startTime       = ndb.TimeProperty()
     websafeConferenceKey = ndb.StringProperty(required=True)
+    websafeSpeakerKey    = ndb.StringProperty()
 
 class SessionForm(messages.Message):
     """SessionForm -- Session outbound form message"""
     name            = messages.StringField(1)
     highlights      = messages.StringField(2)
-    speaker         = messages.StringField(3)
-    duration        = messages.IntegerField(4)
-    typeOfSession   = messages.EnumField('SessionType', 5)
-    date            = messages.StringField(6)
-    startTime       = messages.StringField(7)
-    websafeConferenceKey = messages.StringField(8)
-    websafeKey      = messages.StringField(9)
+    duration        = messages.IntegerField(3)
+    typeOfSession   = messages.EnumField('SessionType', 4)
+    date            = messages.StringField(5)
+    startTime       = messages.StringField(6)
+    websafeConferenceKey = messages.StringField(7)
+    websafeKey           = messages.StringField(8)
+    websafeSpeakerKey    = messages.StringField(9)
 
 class SessionForms(messages.Message):
     """SessionForms -- multiple Session outbound form message"""
@@ -115,9 +115,10 @@ class Speaker(messages.Message):
 
 class SpeakerForm(messages.Message):
     """SpeakerForm -- Speaker outbound form message"""
-    name    = messages.StringField(1)
-    twitter = messages.StringField(2)
-    website = messages.StringField(3)
+    name        = messages.StringField(1)
+    twitter     = messages.StringField(2)
+    website     = messages.StringField(3)
+    websafeKey  = messages.StringField(4)
 
 class SpeakerForms(messages.Message):
     """SpeakerForms -- multiple Speaker outbound form message"""
