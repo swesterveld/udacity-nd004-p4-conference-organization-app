@@ -38,8 +38,11 @@ from models import ConferenceQueryForms
 from models import Session
 from models import SessionForm
 from models import SessionForms
-from models import TeeShirtSize
 from models import SessionType
+from models import Speaker
+from models import SpeakerForm
+from models import SpeakerForms
+from models import TeeShirtSize
 
 from settings import WEB_CLIENT_ID
 from settings import ANDROID_CLIENT_ID
