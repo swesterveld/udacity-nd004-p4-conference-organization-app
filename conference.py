@@ -563,7 +563,7 @@ class ConferenceApi(remote.Service):
 
         return request
 
-    def _getSpeakers(self, request, nameFilter=None)
+    def _getSpeakers(self, request, nameFilter=None):
         """Return speakers, with the option to filter on name."""
         speakers = Speaker.query()
 
