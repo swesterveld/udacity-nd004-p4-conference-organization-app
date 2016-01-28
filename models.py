@@ -107,7 +107,7 @@ class SessionForms(messages.Message):
     """SessionForms -- multiple Session outbound form message"""
     items = messages.MessageField(SessionForm, 1, repeated=True)
 
-class Speaker(messages.Message):
+class Speaker(ndb.Model):
     """Speaker -- Speaker object"""
     name    = ndb.StringProperty(required=True)
     twitter = ndb.StringProperty()
