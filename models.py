@@ -89,7 +89,7 @@ class Session(ndb.Model):
     date            = ndb.DateProperty()
     startTime       = ndb.TimeProperty()
     websafeConferenceKey = ndb.StringProperty(required=True)
-    websafeSpeakerKey    = ndb.StringProperty()
+    websafeSpeakerKey    = ndb.StringProperty()  # XXX Maybe make it plural
 
 class SessionForm(messages.Message):
     """SessionForm -- Session outbound form message"""

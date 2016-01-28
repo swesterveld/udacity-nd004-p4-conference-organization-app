@@ -506,7 +506,6 @@ class ConferenceApi(remote.Service):
     @endpoints.method(SESSION_GET_REQUEST_SPEAKER, SessionForms,
                       path='sessions/{speaker}',
                       http_method='GET', name='getSessionsBySpeaker')
-    #def getSessionsBySpeaker(self, speaker):
     def getSessionsBySpeaker(self, request):
         """Given a speaker, return all sessions given by this particular
         speaker, accross all conferences"""
@@ -524,11 +523,53 @@ class ConferenceApi(remote.Service):
     @endpoints.method(SessionForm, SessionForm,
                       path='conference/{websafeConferenceKey}/session',
                       http_method='POST', name='createSession')
-    # XXX def createSession(self, SessionForm, websafeConferenceKey):
     def createSession(self, request):
         """Create a new session for a given conference"""
         return self._createSessionObject(request)
 
+
+# - - - Speaker objects - - - - - - - - - - - - - - - - - - -
+
+    def _copySpeakerToForm(self, speaker):
+        """Copy relevant fields from Speaker to SpeakerForm."""
+        sf = SpeakerForm()
+        for field in sf.all_fields():
+            if hasattr(speaker, field.name):
+                setattr(sf, field.name, getattr(speaker, field.name))
+            elif field.name == "websafeKey":
+                setattr(sf, field.name, speaker.key.urlsafe())
+        sf.check_initialized()
+        return sf
+
+    def _createSpeakerObject(self, request):
+        """Create or update Speaker object, returning SpeakerForm/request."""
+        # preload necesarry data items
+        user = endpoints.get_current_user()
+        if not user:
+            raise endpoints.UnauthorizedException('Authorization required')
+        user_id = getUserId(user)
+
+        if not request.name:
+            raise endpoints.BadRequestException(
+                "Session 'name' field required")
+
+        # copy SpeakerForm/ProtoRPC Message into dict
+        data = {field.name: getattr(request, field.name)
+                for field in request.all_fields()}
+        del data['websafeKey']
+
+        return request
+
+    def _getSpeakers(self, request, nameFilter=None)
+        """Return speakers, with the option to filter on name."""
+        speakers = Speaker.query()
+
+        if nameFilter:
+            speakers.filter(Speaker.name == nameFilter)
+
+        return SpeakerForms(
+            items=[self._copySpeakerToForm(speaker) for speaker in speakers]
+        )
 
 # - - - Profile objects - - - - - - - - - - - - - - - - - - -
 
