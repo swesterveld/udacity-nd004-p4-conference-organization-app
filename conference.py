@@ -119,7 +119,7 @@ SESSION_POST_REQUEST = endpoints.ResourceContainer(
 
 SESSION_POST_REQUEST_MODIFY_SPEAKERS = endpoints.ResourceContainer(
     websafeSessionKey=messages.StringField(1),
-    websafeSpeakerKey=messages.StringField(2)
+    websafeSpeakerKey=messages.StringField(2),
 )
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -471,7 +471,8 @@ class ConferenceApi(remote.Service):
                       url='/tasks/send_confirmation_email')
         return request
 
-    def _modifySpeakersForSession(self, request, add=True):
+    def _updateSpeakersForSession(self, request, add):
+        """Based on the calling endpoint, add or remove a Speaker."""
         session = ndb.Key(urlsafe=request.websafeSessionKey).get()
         if not session:
             raise endpoints.NotFoundException(
@@ -488,26 +489,28 @@ class ConferenceApi(remote.Service):
                 )
             )
 
-        if add and (request.websafeSessionKey not in session.speakers):
-            session.speakers.append(request.websafeSpeakerKey)
-            session.put()
-        if not add:
-            session.speakers.remove(request.websafeSpeakerKey)
-            session.put()
+        if add:
+            if request.websafeSpeakerKey not in session.speakers:
+                session.speakers.append(request.websafeSpeakerKey)
+                session.put()
+        else:
+            if request.websafeSpeakerKey in session.speakers:
+                session.speakers.remove(request.websafeSpeakerKey)
+                session.put()
 
         return self._copySessionToForm(session)
 
     @endpoints.method(SESSION_POST_REQUEST_MODIFY_SPEAKERS, SessionForm,
-                      path='session/{websafeSessionKey}/speakers/add/{websafeSpeakerKey}',
                       http_method='POST', name='addSpeakerToSession')
     def addSpeakerToSession(self, request):
-        return self._modifySpeakersForSession(request, add=True)
+        """Add a Speaker to a Session."""
+        return self._updateSpeakersForSession(request, add=True)
 
     @endpoints.method(SESSION_POST_REQUEST_MODIFY_SPEAKERS, SessionForm,
-                      path='session/{websafeSessionKey}/speakers/remove/{websafeSpeakerKey}',
                       http_method='POST', name='removeSpeakerFromSession')
     def removeSpeakerFromSession(self, request):
-        return self._modifySpeakersForSession(request, add=False)
+        """Remove a Speaker from a Session."""
+        return self._updateSpeakersForSession(request, add=False)
 
     def _getSessions(self, request, typeFilter=None):
         conf = ndb.Key(urlsafe=request.websafeConferenceKey)
