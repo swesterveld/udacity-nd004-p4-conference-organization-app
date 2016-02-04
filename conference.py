@@ -33,7 +33,6 @@ from models import BooleanMessage
 from models import Conference
 from models import ConferenceForm
 from models import ConferenceForms
-from models import ConferenceQueryForm
 from models import ConferenceQueryForms
 from models import Session
 from models import SessionForm
@@ -67,6 +66,7 @@ DEFAULTS = {
 
 SESSION_DEFAULTS = {
     "duration": 30,
+    "speakers": [],
     "typeOfSession": "NOT_SPECIFIED"
 }
 
@@ -117,6 +117,10 @@ SESSION_POST_REQUEST = endpoints.ResourceContainer(
     websafeConferenceKey=messages.StringField(1),
 )
 
+SESSION_POST_REQUEST_MODIFY_SPEAKERS = endpoints.ResourceContainer(
+    websafeSessionKey=messages.StringField(1),
+    websafeSpeakerKey=messages.StringField(2)
+)
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -467,6 +471,44 @@ class ConferenceApi(remote.Service):
                       url='/tasks/send_confirmation_email')
         return request
 
+    def _modifySpeakersForSession(self, request, add=True):
+        session = ndb.Key(urlsafe=request.websafeSessionKey).get()
+        if not session:
+            raise endpoints.NotFoundException(
+                'No session found with key: {}'.format(
+                    request.websafeSessionKey
+                )
+            )
+
+        speaker = ndb.Key(urlsafe=request.websafeSpeakerKey).get()
+        if not speaker:
+            raise endpoints.NotFoundException(
+                'No speaker found with key: {}'.format(
+                    request.websafeSpeakerKey
+                )
+            )
+
+        if add and (request.websafeSessionKey not in session.speakers):
+            session.speakers.append(request.websafeSpeakerKey)
+            session.put()
+        if not add:
+            session.speakers.remove(request.websafeSpeakerKey)
+            session.put()
+
+        return self._copySessionToForm(session)
+
+    @endpoints.method(SESSION_POST_REQUEST_MODIFY_SPEAKERS, SessionForm,
+                      path='session/{websafeSessionKey}/speakers/add/{websafeSpeakerKey}',
+                      http_method='POST', name='addSpeakerToSession')
+    def addSpeakerToSession(self, request):
+        return self._modifySpeakersForSession(request, add=True)
+
+    @endpoints.method(SESSION_POST_REQUEST_MODIFY_SPEAKERS, SessionForm,
+                      path='session/{websafeSessionKey}/speakers/remove/{websafeSpeakerKey}',
+                      http_method='POST', name='removeSpeakerFromSession')
+    def removeSpeakerFromSession(self, request):
+        return self._modifySpeakersForSession(request, add=False)
+
     def _getSessions(self, request, typeFilter=None):
         conf = ndb.Key(urlsafe=request.websafeConferenceKey)
 
@@ -512,19 +554,14 @@ class ConferenceApi(remote.Service):
     def getSessionsBySpeaker(self, request):
         """Given a speaker, return all sessions given by this particular
         speaker, accross all conferences"""
-        sessions = Session.query()
-
-        filteredSessions = sessions.filter(
-            Session.speaker == request.speaker).fetch(
-                projection=[Session.name])
+        sessions = Session.query(Session.speakers == request.speaker)
 
         return SessionForms(
             items=[self._copySessionToForm(session)
-                   for session in filteredSessions])
-        #return self._getSessions(request, speakerFilter=request.speaker)
+                   for session in sessions])
 
     @endpoints.method(SessionForm, SessionForm,
-                      path='conference/{websafeConferenceKey}/session',
+                      path='conference/{websafeConferenceKey}/session/new',
                       http_method='POST', name='createSession')
     def createSession(self, request):
         """Create a new session for a given conference"""
@@ -550,7 +587,6 @@ class ConferenceApi(remote.Service):
         user = endpoints.get_current_user()
         if not user:
             raise endpoints.UnauthorizedException('Authorization required')
-        user_id = getUserId(user)
 
         if not request.name:
             raise endpoints.BadRequestException(
@@ -561,6 +597,11 @@ class ConferenceApi(remote.Service):
                 for field in request.all_fields()}
         del data['websafeKey']
 
+        s_id = Speaker.allocate_ids(size=1)[0]
+        s_key = ndb.Key(Speaker, s_id)
+        data['key'] = s_key
+
+        Speaker(**data).put()
         return request
 
     def _getSpeakers(self, request, nameFilter=None):
@@ -573,6 +614,20 @@ class ConferenceApi(remote.Service):
         return SpeakerForms(
             items=[self._copySpeakerToForm(speaker) for speaker in speakers]
         )
+
+    @endpoints.method(SESSION_GET_REQUEST_SPEAKER, SpeakerForms,
+                      path='/speakers', http_method='GET',
+                      name='getSpeakers')
+    def getSpeakers(self, request):
+        """Return all speakers"""
+        return self._getSpeakers(request)
+
+    @endpoints.method(SpeakerForm, SpeakerForm,
+                      path='speaker/new',
+                      http_method='POST', name='createSpeaker')
+    def createSpeaker(self, request):
+        """Create a new speaker"""
+        return self._createSpeakerObject(request)
 
 # - - - Profile objects - - - - - - - - - - - - - - - - - - -
 

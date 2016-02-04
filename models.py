@@ -88,20 +88,20 @@ class Session(ndb.Model):
     typeOfSession   = ndb.StringProperty(default='NOT_SPECIFIED')
     date            = ndb.DateProperty()
     startTime       = ndb.TimeProperty()
+    speakers        = ndb.StringProperty(repeated=True)
     websafeConferenceKey = ndb.StringProperty(required=True)
-    websafeSpeakerKey    = ndb.StringProperty()  # XXX Maybe make it plural
 
 class SessionForm(messages.Message):
     """SessionForm -- Session outbound form message"""
     name            = messages.StringField(1)
     highlights      = messages.StringField(2)
     duration        = messages.IntegerField(3)
-    typeOfSession   = messages.EnumField('SessionType', 4)
+    typeOfSession   = messages.EnumField('SessionType', 4, default='NOT_SPECIFIED')
     date            = messages.StringField(5)
     startTime       = messages.StringField(6)
-    websafeConferenceKey = messages.StringField(7)
-    websafeKey           = messages.StringField(8)
-    websafeSpeakerKey    = messages.StringField(9)
+    speakers        = messages.StringField(7, repeated=True)
+    websafeConferenceKey = messages.StringField(8)
+    websafeKey           = messages.StringField(9)
 
 class SessionForms(messages.Message):
     """SessionForms -- multiple Session outbound form message"""
@@ -160,4 +160,3 @@ class ConferenceQueryForm(messages.Message):
 class ConferenceQueryForms(messages.Message):
     """ConferenceQueryForms -- multiple ConferenceQueryForm inbound form message"""
     filters = messages.MessageField(ConferenceQueryForm, 1, repeated=True)
-
