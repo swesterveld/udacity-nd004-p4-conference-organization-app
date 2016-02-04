@@ -280,7 +280,7 @@ class ConferenceApi(remote.Service):
         return self._copyConferenceToForm(conf, getattr(prof, 'displayName'))
 
     @endpoints.method(message_types.VoidMessage, ConferenceForms,
-                      path='getConferencesCreated',
+                      path='conferences/created',
                       http_method='POST', name='getConferencesCreated')
     def getConferencesCreated(self, request):
         """Return conferences created by user."""
@@ -354,7 +354,7 @@ class ConferenceApi(remote.Service):
         return (inequality_field, formatted_filters)
 
     @endpoints.method(ConferenceQueryForms, ConferenceForms,
-                      path='queryConferences',
+                      path='conferences/query',
                       http_method='POST',
                       name='queryConferences')
     def queryConferences(self, request):
@@ -542,7 +542,7 @@ class ConferenceApi(remote.Service):
         return self._getSessions(websafeConferenceKey)
 
     @endpoints.method(SESSION_GET_REQUEST_FILTERED, SessionForms,
-                      path='conference/{websafeConferenceKey}/sessions/type/{typeOfSession}',
+                      path='sessions/type/{typeOfSession}',
                       http_method='GET', name='getConferenceSessionsByType')
     def getConferenceSessionsByType(self, request):
         """Given a conference with a websafeConferenceKey, return all sessions
@@ -552,7 +552,7 @@ class ConferenceApi(remote.Service):
         return self._getSessions(request, typeFilter=request.typeOfSession)
 
     @endpoints.method(SESSION_GET_REQUEST_SPEAKER, SessionForms,
-                      path='sessions/{speaker}',
+                      path='sessions/speaker/{speaker}',
                       http_method='GET', name='getSessionsBySpeaker')
     def getSessionsBySpeaker(self, request):
         """Given a speaker, return all sessions given by this particular
@@ -564,7 +564,7 @@ class ConferenceApi(remote.Service):
                    for session in sessions])
 
     @endpoints.method(SessionForm, SessionForm,
-                      path='conference/{websafeConferenceKey}/session/new',
+                      path='conference/{websafeConferenceKey}/session',
                       http_method='POST', name='createSession')
     def createSession(self, request):
         """Create a new session for a given conference"""
@@ -619,14 +619,14 @@ class ConferenceApi(remote.Service):
         )
 
     @endpoints.method(SESSION_GET_REQUEST_SPEAKER, SpeakerForms,
-                      path='/speakers', http_method='GET',
+                      path='speakers', http_method='GET',
                       name='getSpeakers')
     def getSpeakers(self, request):
         """Return all speakers"""
         return self._getSpeakers(request)
 
     @endpoints.method(SpeakerForm, SpeakerForm,
-                      path='speaker/new',
+                      path='speaker',
                       http_method='POST', name='createSpeaker')
     def createSpeaker(self, request):
         """Create a new speaker"""
@@ -819,14 +819,14 @@ class ConferenceApi(remote.Service):
         )
 
     @endpoints.method(CONF_GET_REQUEST, BooleanMessage,
-                      path='conference/{websafeConferenceKey}',
+                      path='conference/{websafeConferenceKey}/register',
                       http_method='POST', name='registerForConference')
     def registerForConference(self, request):
         """Register user for selected conference."""
         return self._conferenceRegistration(request)
 
     @endpoints.method(CONF_GET_REQUEST, BooleanMessage,
-                      path='conference/{websafeConferenceKey}',
+                      path='conference/{websafeConferenceKey}/unregister',
                       http_method='DELETE', name='unregisterFromConference')
     def unregisterFromConference(self, request):
         """Unregister user for selected conference."""
