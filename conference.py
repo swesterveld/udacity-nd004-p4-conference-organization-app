@@ -103,7 +103,7 @@ SESSION_GET_REQUEST = endpoints.ResourceContainer(
 
 SESSION_GET_REQUEST_FILTERED = endpoints.ResourceContainer(
     message_types.VoidMessage,
-    websafeConferenceKey=messages.StringField(1),
+    websafeConferenceKey=messages.StringField(1, required=True),
     typeOfSession=messages.StringField(2),
 )
 
