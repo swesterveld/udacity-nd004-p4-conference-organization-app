@@ -23,6 +23,12 @@ App Engine application for the Udacity training course.
 1. (Optional) Generate your client library(ies) with [the endpoints tool][6].
 1. Deploy your application.
 
+## Task 1: Add Sessions to a Conference
+The following endpoint methods have been defined:
+1. getConferenceSessions(websafeConferenceKey) -- This invokes a generic _getSessions method which returns a list of existing Sessions of a conference that matches the given webSafeConferenceKey.
+1. getConferenceSessionsByType(websafeConferenceKey, typeofSession) -- This invokes a generic _getSessions method which returns a limited list of existing Sessions of a conference that matches the given webSafeConferenceKey. Because in this case the invokation of the generic _getSessions method is done with an extra parameter for filtering on type, it will limit the list Sessions according to the given type.
+1. getSessionsBySpeaker(speaker) -- This method returns a list of Sessions accross all conferences, limited to the Sessions where the given speaker is in the list of speakers.
+1. createSession(SessionForm, websafeConferenceKey) -- This invokes a _createSessionObject method which copies the data from the request to a new Session object.
 
 [1]: https://developers.google.com/appengine
 [2]: http://python.org
