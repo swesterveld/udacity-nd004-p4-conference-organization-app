@@ -501,13 +501,13 @@ class ConferenceApi(remote.Service):
         return self._copySessionToForm(session)
 
     @endpoints.method(SESSION_POST_REQUEST_MODIFY_SPEAKERS, SessionForm,
-                      http_method='POST', name='addSpeakerToSession')
+                      http_method='PUT', name='addSpeakerToSession')
     def addSpeakerToSession(self, request):
         """Add a Speaker to a Session."""
         return self._updateSpeakersForSession(request, add=True)
 
     @endpoints.method(SESSION_POST_REQUEST_MODIFY_SPEAKERS, SessionForm,
-                      http_method='POST', name='removeSpeakerFromSession')
+                      http_method='PUT', name='removeSpeakerFromSession')
     def removeSpeakerFromSession(self, request):
         """Remove a Speaker from a Session."""
         return self._updateSpeakersForSession(request, add=False)
