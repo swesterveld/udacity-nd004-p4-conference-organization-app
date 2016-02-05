@@ -118,8 +118,8 @@ SESSION_POST_REQUEST = endpoints.ResourceContainer(
 )
 
 SESSION_POST_REQUEST_MODIFY_SPEAKERS = endpoints.ResourceContainer(
-    websafeSessionKey=messages.StringField(1),
-    websafeSpeakerKey=messages.StringField(2),
+    websafeSessionKey=messages.StringField(1, required=True),
+    websafeSpeakerKey=messages.StringField(2, required=True),
 )
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
