@@ -683,10 +683,10 @@ class ConferenceApi(remote.Service):
                     val = getattr(save_request, field)
                     if val:
                         setattr(prof, field, str(val))
-                        #if field == 'teeShirtSize':
-                        #    setattr(prof, field, str(val).upper())
-                        #else:
-                        #    setattr(prof, field, val)
+                        # if field == 'teeShirtSize':
+                        #     setattr(prof, field, str(val).upper())
+                        # else:
+                        #     setattr(prof, field, val)
                         prof.put()
 
         # return ProfileForm
