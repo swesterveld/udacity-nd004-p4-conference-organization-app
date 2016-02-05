@@ -461,8 +461,6 @@ class ConferenceApi(remote.Service):
                 'Only the owner of the conference create a session.'
             )
 
-        # TODO: implement Speaker related things
-
         # create Session, send email to organizer confirming creation of
         # Session and return (modified) SessionForm
         Session(**data).put()
