@@ -409,6 +409,18 @@ class ConferenceApi(remote.Service):
             raise endpoints.UnauthorizedException('Authorization required')
         user_id = getUserId(user)
 
+        conf = ndb.Key(urlsafe=request.websafeConferenceKey).get()
+        if not conf:
+            raise endpoints.NotFoundException(
+                'No conference found with key {}'.format(
+                    request.websafeConferenceKey)
+            )
+
+        if user_id != conf.organizerUserId:
+            raise endpoints.ForbiddenException(
+                'Only the owner of the conference may create a session.'
+            )
+
         if not request.name:
             raise endpoints.BadRequestException(
                 "Session 'name' field required")
@@ -448,18 +460,6 @@ class ConferenceApi(remote.Service):
         sess_key = ndb.Key(Session, sess_id, parent=conf_key)
         data['key'] = sess_key
         data['websafeConferenceKey'] = request.websafeConferenceKey
-
-        conf = ndb.Key(urlsafe=request.websafeConferenceKey).get()
-        if not conf:
-            raise endpoints.NotFoundException(
-                'No conference found with key {}'.format(
-                    request.websafeConferenceKey)
-            )
-
-        if user_id != conf.organizerUserId:
-            raise endpoints.ForbiddenException(
-                'Only the owner of the conference create a session.'
-            )
 
         # create Session, send email to organizer confirming creation of
         # Session and return (modified) SessionForm
