@@ -194,10 +194,10 @@ class ConferenceApi(remote.Service):
             data["seatsAvailable"] = data["maxAttendees"]
         # generate Profile Key based on user ID and Conference
         # ID based on Profile key get Conference key from ID
-        p_key = ndb.Key(Profile, user_id)
-        c_id = Conference.allocate_ids(size=1, parent=p_key)[0]
-        c_key = ndb.Key(Conference, c_id, parent=p_key)
-        data['key'] = c_key
+        prof_key = ndb.Key(Profile, user_id)
+        conf_id = Conference.allocate_ids(size=1, parent=prof_key)[0]
+        conf_key = ndb.Key(Conference, conf_id, parent=prof_key)
+        data['key'] = conf_key
         data['organizerUserId'] = request.organizerUserId = user_id
 
         # create Conference, send email to organizer confirming
@@ -443,10 +443,10 @@ class ConferenceApi(remote.Service):
         # generate Conference Key based on websafeConferenceKey and
         # Session ID based on Conference Key and get Session websafe key
         # from ID.
-        c_key = ndb.Key(Conference, request.websafeConferenceKey)
-        s_id = Session.allocate_ids(size=1, parent=c_key)[0]
-        s_key = ndb.Key(Session, s_id, parent=c_key)
-        data['key'] = s_key
+        conf_key = ndb.Key(Conference, request.websafeConferenceKey)
+        sess_id = Session.allocate_ids(size=1, parent=conf_key)[0]
+        sess_key = ndb.Key(Session, sess_id, parent=conf_key)
+        data['key'] = sess_key
         data['websafeConferenceKey'] = request.websafeConferenceKey
 
         conf = ndb.Key(urlsafe=request.websafeConferenceKey).get()
@@ -511,9 +511,9 @@ class ConferenceApi(remote.Service):
         return self._updateSpeakersForSession(request, add=False)
 
     def _getSessions(self, request, typeFilter=None):
-        conf = ndb.Key(urlsafe=request.websafeConferenceKey)
+        conf_key = ndb.Key(urlsafe=request.websafeConferenceKey)
 
-        if not conf:
+        if not conf_key:
             raise endpoints.NotFoundException(
                 'No conference found with key {}'.format(
                     request.websafeConferenceKey
@@ -522,6 +522,7 @@ class ConferenceApi(remote.Service):
 
         sessions = Session.query(
             Session.websafeConferenceKey == request.websafeConferenceKey)
+        #sessions = Session.query(ancestor=conf_key)
 
         # Apply filters, if any.
         if typeFilter:
@@ -657,12 +658,12 @@ class ConferenceApi(remote.Service):
 
         # get Profile from datastore
         user_id = getUserId(user)
-        p_key = ndb.Key(Profile, user_id)
-        profile = p_key.get()
+        prof_key = ndb.Key(Profile, user_id)
+        profile = prof_key.get()
         # create new Profile if not there
         if not profile:
             profile = Profile(
-                key=p_key,
+                key=prof_key,
                 displayName=user.nickname(),
                 mainEmail=user.email(),
                 teeShirtSize=str(TeeShirtSize.NOT_SPECIFIED),
