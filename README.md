@@ -30,6 +30,14 @@ The following endpoint methods have been defined:
 1. getSessionsBySpeaker(speaker) -- This method returns a list of Sessions accross all conferences, limited to the Sessions where the given speaker is in the list of speakers.
 1. createSession(SessionForm, websafeConferenceKey) -- This invokes a _createSessionObject method which copies the data from the request to a new Session object.
 
+Session is implemented as a child of Conference, because that will make it easier to quickly find all sessions of a conference.
+Speaker is implemented as a separate model, because that will make it easier for re-use and to extend it with properties.
+By using a repeatable KeyProperty for speakers of a Session, it will be possible to treat it as a many-to-many relationship.
+
+The _updateSpeakersForSession method has been implemented as a generic method, to invoke for both adding and removing Speakers of a Session.
+Like this, the endpoints addSpeakerToSession and reomveSpeakerFromSession can be kept very clean.
+Another generic method is _getSessions, with an optional parameter for filtering. This makes it possible to have very light endpoints for specific filters, and have the implementation of filtering at one place, according to the DRY principle.
+
 [1]: https://developers.google.com/appengine
 [2]: http://python.org
 [3]: https://developers.google.com/appengine/docs/python/endpoints/
