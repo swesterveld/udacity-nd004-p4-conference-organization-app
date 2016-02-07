@@ -98,8 +98,7 @@ class Session(ndb.Model):
     typeOfSession   = ndb.StringProperty(default='NOT_SPECIFIED')
     date            = ndb.DateProperty()
     startTime       = ndb.TimeProperty()
-    speakers        = ndb.StringProperty(repeated=True)
-    #websafeConferenceKey = ndb.StringProperty(required=True)
+    speakers        = ndb.KeyProperty(kind='Speaker', repeated=True)
 
 class SessionForm(messages.Message):
     """Outbound form message for Session"""

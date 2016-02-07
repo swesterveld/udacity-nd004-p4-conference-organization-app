@@ -104,7 +104,7 @@ SESSION_GET_REQUEST = endpoints.ResourceContainer(
 SESSION_GET_REQUEST_FILTERED = endpoints.ResourceContainer(
     message_types.VoidMessage,
     websafeConferenceKey=messages.StringField(1, required=True),
-    typeOfSession=messages.StringField(2),
+    typeOfSession=messages.StringField(2),  # XXX rename to filter to make it more generic?
 )
 
 SESSION_GET_REQUEST_SPEAKER = endpoints.ResourceContainer(
@@ -115,6 +115,16 @@ SESSION_GET_REQUEST_SPEAKER = endpoints.ResourceContainer(
 SESSION_POST_REQUEST = endpoints.ResourceContainer(
     SessionForm,
     websafeConferenceKey=messages.StringField(1),
+)
+
+SPKR_POST_REQUEST = endpoints.ResourceContainer(
+    SpeakerForm,
+    websafeKey=messages.StringField(1),
+    )
+
+SPKR_GET_REQUEST = endpoints.ResourceContainer(
+    message_types.VoidMessage,
+    websafeKey=messages.StringField(1),
 )
 
 SESSION_POST_REQUEST_MODIFY_SPEAKERS = endpoints.ResourceContainer(
@@ -260,7 +270,8 @@ class ConferenceApi(remote.Service):
                       path='conference/{websafeConferenceKey}',
                       http_method='PUT', name='updateConference')
     def updateConference(self, request):
-        """Update conference w/provided fields & return w/updated info."""
+        """Update conference with provided fields and return with updated
+        info."""
         return self._updateConferenceObject(request)
 
     @endpoints.method(CONF_GET_REQUEST, ConferenceForm,
@@ -393,6 +404,8 @@ class ConferenceApi(remote.Service):
                     # convert typeOfSession string to Enum
                     setattr(sf, field.name, getattr(SessionType,
                             getattr(session, field.name)))
+                elif field.name == 'speakers':
+                    setattr(sf, field.name, [str(speaker) for speaker in getattr(session, field.name)])
                 else:
                     # just copy the others
                     setattr(sf, field.name, getattr(session, field.name))
@@ -459,15 +472,14 @@ class ConferenceApi(remote.Service):
         sess_id = Session.allocate_ids(size=1, parent=conf_key)[0]
         sess_key = ndb.Key(Session, sess_id, parent=conf_key)
         data['key'] = sess_key
-        data['websafeConferenceKey'] = request.websafeConferenceKey
 
         # create Session, send email to organizer confirming creation of
         # Session and return (modified) SessionForm
-        Session(**data).put()
+        session = Session(**data).put()
         taskqueue.add(params={'email': user.email(),
                       'sessionInfo': repr(request)},
                       url='/tasks/send_confirmation_email')
-        return request
+        return self._copySessionToForm(session.get())
 
     def _updateSpeakersForSession(self, request, add):
         """Based on the calling endpoint, add or remove a Speaker."""
@@ -479,8 +491,8 @@ class ConferenceApi(remote.Service):
                 )
             )
 
-        speaker = ndb.Key(urlsafe=request.websafeSpeakerKey).get()
-        if not speaker:
+        spkr_key = ndb.Key(urlsafe=request.websafeSpeakerKey)
+        if not spkr_key:
             raise endpoints.NotFoundException(
                 'No speaker found with key: {}'.format(
                     request.websafeSpeakerKey
@@ -488,18 +500,18 @@ class ConferenceApi(remote.Service):
             )
 
         if add:
-            if request.websafeSpeakerKey not in session.speakers:
-                session.speakers.append(request.websafeSpeakerKey)
+            if spkr_key not in session.speakers:
+                session.speakers.append(spkr_key)
                 session.put()
         else:
-            if request.websafeSpeakerKey in session.speakers:
-                session.speakers.remove(request.websafeSpeakerKey)
+            if spkr_key in session.speakers:
+                session.speakers.remove(spkr_key)
                 session.put()
 
         return self._copySessionToForm(session)
 
     @endpoints.method(SESSION_POST_REQUEST_MODIFY_SPEAKERS, SessionForm,
-                      http_method='PUT', name='addSpeakerToSession')
+                      http_method='POST', name='addSpeakerToSession')
     def addSpeakerToSession(self, request):
         """Add a Speaker to a Session."""
         return self._updateSpeakersForSession(request, add=True)
@@ -511,7 +523,7 @@ class ConferenceApi(remote.Service):
         return self._updateSpeakersForSession(request, add=False)
 
     def _getSessions(self, request, typeFilter=None):
-        conf_key = ndb.Key(urlsafe=request.websafeConferenceKey)
+        conf_key = ndb.Key(Conference, request.websafeConferenceKey)
 
         if not conf_key:
             raise endpoints.NotFoundException(
@@ -520,9 +532,7 @@ class ConferenceApi(remote.Service):
                 )
             )
 
-        sessions = Session.query(
-            Session.websafeConferenceKey == request.websafeConferenceKey)
-        #sessions = Session.query(ancestor=conf_key)
+        sessions = Session.query(ancestor=conf_key)
 
         # Apply filters, if any.
         if typeFilter:
@@ -535,10 +545,10 @@ class ConferenceApi(remote.Service):
     @endpoints.method(SESSION_GET_REQUEST, SessionForms,
                       path='conference/{websafeConferenceKey}/sessions',
                       http_method='GET', name='getConferenceSessions')
-    def getConferenceSessions(self, websafeConferenceKey):
+    def getConferenceSessions(self, request):
         """Given a conference with a websafeConferenceKey,
         return all sessions"""
-        return self._getSessions(websafeConferenceKey)
+        return self._getSessions(request)
 
     @endpoints.method(SESSION_GET_REQUEST_FILTERED, SessionForms,
                       path='sessions/type/{typeOfSession}',
@@ -556,13 +566,14 @@ class ConferenceApi(remote.Service):
     def getSessionsBySpeaker(self, request):
         """Given a speaker, return all sessions given by this particular
         speaker, accross all conferences"""
-        sessions = Session.query(Session.speakers == request.speaker)
+        spkr_key = ndb.Key(urlsafe=request.speaker)
+        sessions = Session.query(Session.speakers == spkr_key)
 
         return SessionForms(
             items=[self._copySessionToForm(session)
                    for session in sessions])
 
-    @endpoints.method(SessionForm, SessionForm,
+    @endpoints.method(SESSION_POST_REQUEST, SessionForm,
                       path='conference/{websafeConferenceKey}/session',
                       http_method='POST', name='createSession')
     def createSession(self, request):
@@ -585,10 +596,6 @@ class ConferenceApi(remote.Service):
 
     def _createSpeakerObject(self, request):
         """Create or update Speaker object, returning SpeakerForm/request."""
-        # preload necesarry data items
-        user = endpoints.get_current_user()
-        if not user:
-            raise endpoints.UnauthorizedException('Authorization required')
 
         if not request.name:
             raise endpoints.BadRequestException(
@@ -603,8 +610,8 @@ class ConferenceApi(remote.Service):
         s_key = ndb.Key(Speaker, s_id)
         data['key'] = s_key
 
-        Speaker(**data).put()
-        return request
+        spkr_key = Speaker(**data).put()
+        return self._copySpeakerToForm(spkr_key.get())
 
     def _getSpeakers(self, request, nameFilter=None):
         """Return speakers, with the option to filter on name."""
@@ -617,14 +624,14 @@ class ConferenceApi(remote.Service):
             items=[self._copySpeakerToForm(speaker) for speaker in speakers]
         )
 
-    @endpoints.method(SESSION_GET_REQUEST_SPEAKER, SpeakerForms,
+    @endpoints.method(SPKR_GET_REQUEST, SpeakerForms,
                       path='speakers', http_method='GET',
                       name='getSpeakers')
     def getSpeakers(self, request):
         """Return all speakers"""
         return self._getSpeakers(request)
 
-    @endpoints.method(SpeakerForm, SpeakerForm,
+    @endpoints.method(SPKR_POST_REQUEST, SpeakerForm,
                       path='speaker',
                       http_method='POST', name='createSpeaker')
     def createSpeaker(self, request):
