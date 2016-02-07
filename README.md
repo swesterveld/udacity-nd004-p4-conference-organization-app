@@ -74,12 +74,44 @@ The following endpoint methods have been defined:
 - `createSession` -- This invokes a `_createSessionObject` method which copies
   the data from the request to a new Session object.
 
-The _updateSpeakersForSession method has been implemented as a generic method, to
-invoke for both adding and removing Speakers of a Session. Like this, the
-endpoints addSpeakerToSession and reomveSpeakerFromSession can be kept very clean.
-Another generic method is _getSessions, with an optional parameter for filtering.
-This makes it possible to have very light endpoints for specific filters, and have
-the implementation of filtering at one place, according to the DRY principle.
+The `_updateSpeakersForSession` method has been implemented as a generic method,
+to invoke for both adding and removing Speakers of a Session. Like this, the
+endpoints addSpeakerToSession and `removeSpeakerFromSession` can be kept very
+clean. Another generic method is _getSessions, with an optional parameter for
+filtering. This makes it possible to have very light endpoints for specific
+filters, and have the implementation of filtering at one place, according to the
+DRY principle.
+
+```python
+    def _updateSpeakersForSession(self, request, add):
+        """Based on the calling endpoint, add or remove a Speaker."""
+        session = ndb.Key(urlsafe=request.websafeSessionKey).get()
+
+        [...]
+
+        if add:
+            if spkr_key not in session.speakers:
+                session.speakers.append(spkr_key)
+                session.put()
+        else:
+            if spkr_key in session.speakers:
+                session.speakers.remove(spkr_key)
+                session.put()
+
+        return self._copySessionToForm(session)
+
+    @endpoints.method(SESSION_POST_REQUEST_MODIFY_SPEAKERS, SessionForm,
+                      http_method='POST', name='addSpeakerToSession')
+    def addSpeakerToSession(self, request):
+        """Add a Speaker to a Session."""
+        return self._updateSpeakersForSession(request, add=True)
+
+    @endpoints.method(SESSION_POST_REQUEST_MODIFY_SPEAKERS, SessionForm,
+                      http_method='PUT', name='removeSpeakerFromSession')
+    def removeSpeakerFromSession(self, request):
+        """Remove a Speaker from a Session."""
+        return self._updateSpeakersForSession(request, add=False)
+```
 
 [1]: https://developers.google.com/appengine
 [2]: http://python.org
