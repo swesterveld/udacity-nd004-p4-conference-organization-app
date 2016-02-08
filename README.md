@@ -114,6 +114,21 @@ DRY principle.
         return self._updateSpeakersForSession(request, add=False)
 ```
 
+## Task 2: Add Sessions to User Wishlist
+
+The following endpoint methods have been defined:
+
+- `addSessionToWishlist()` -- 
+- `getSessionsInWishlist()` --
+- `deleteSessionInWishlist()` --
+
+
+## Task 3: Work on indexes and queries
+
+
+## Task 4: Add a Task
+
+
 [1]: https://developers.google.com/appengine
 [2]: http://python.org
 [3]: https://developers.google.com/appengine/docs/python/endpoints/
