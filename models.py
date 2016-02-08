@@ -137,6 +137,18 @@ class SpeakerForms(messages.Message):
     items = messages.MessageField(SpeakerForm, 1, repeated=True)
 
 
+class Wishlist(ndb.Model):
+    """Wishlist object"""
+    #session = ndb.StringProperty()
+    session = ndb.KeyProperty(kind=Session)
+
+
+class WishlistForm(messages.Message):
+    """Outbound form message for Wishlist"""
+    session     = messages.StringField(1)
+    websafeKey  = messages.StringField(2)
+
+
 class TeeShirtSize(messages.Enum):
     """T-shirt size enumeration value"""
     NOT_SPECIFIED = 1
