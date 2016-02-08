@@ -977,23 +977,23 @@ class ConferenceApi(remote.Service):
         """Unregister user for selected conference."""
         return self._conferenceRegistration(request, reg=False)
 
-    @endpoints.method(message_types.VoidMessage, ConferenceForms,
-                      path='filterPlayground',
-                      http_method='GET', name='filterPlayground')
-    def filterPlayground(self, request):
-        """Filter Playground"""
-        q = Conference.query()
-        # field = "city"
-        # operator = "="
-        # value = "London"
-        # f = ndb.query.FilterNode(field, operator, value)
-        # q = q.filter(f)
-        q = q.filter(Conference.city == "London")
-        q = q.filter(Conference.topics == "Medical Innovations")
-        q = q.filter(Conference.month == 6)
+    #@endpoints.method(message_types.VoidMessage, ConferenceForms,
+    #                  path='filterPlayground',
+    #                  http_method='GET', name='filterPlayground')
+    #def filterPlayground(self, request):
+    #    """Filter Playground"""
+    #    q = Conference.query()
+    #    # field = "city"
+    #    # operator = "="
+    #    # value = "London"
+    #    # f = ndb.query.FilterNode(field, operator, value)
+    #    # q = q.filter(f)
+    #    q = q.filter(Conference.city == "London")
+    #    q = q.filter(Conference.topics == "Medical Innovations")
+    #    q = q.filter(Conference.month == 6)
 
-        return ConferenceForms(
-            items=[self._copyConferenceToForm(conf, "") for conf in q]
-        )
+    #    return ConferenceForms(
+    #        items=[self._copyConferenceToForm(conf, "") for conf in q]
+    #    )
 
 api = endpoints.api_server([ConferenceApi])  # register API
