@@ -98,6 +98,7 @@ class Session(ndb.Model):
     typeOfSession   = ndb.StringProperty(default='NOT_SPECIFIED')
     date            = ndb.DateProperty()
     startTime       = ndb.TimeProperty()
+    endTime         = ndb.TimeProperty()
     speakers        = ndb.KeyProperty(kind='Speaker', repeated=True)
 
 class SessionForm(messages.Message):
@@ -139,7 +140,6 @@ class SpeakerForms(messages.Message):
 
 class Wishlist(ndb.Model):
     """Wishlist object"""
-    #session = ndb.StringProperty()
     session = ndb.KeyProperty(kind=Session)
 
 
@@ -176,6 +176,9 @@ class SessionType(messages.Enum):
     KEYNOTE = 4
     BREAK = 5
     OPEN_SPACE = 6
+    LIGHTNING_TALK = 7
+    BIRDS_OF_FEATHER = 8
+    SOCIAL_EVENT = 9
 
 
 class ConferenceQueryForm(messages.Message):
