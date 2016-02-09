@@ -133,7 +133,7 @@ The following endpoint methods have been defined:
 
 ## Task 3: Work on indexes and queries
 
-### Query related problem with inequality filtering for multiple properties    |
+### Query related problem with inequality filtering for multiple properties
 
 According to the [docs][7], the Datastore API doesn't support inequality filtering on
 multiple properties:
@@ -145,10 +145,11 @@ multiple properties:
 > disallowed. Also filters referencing multiple properties sometimes require
 > secondary indexes to be configured.
 
-There are multiple approaches possible to tackle this problem, of which I've
-chosen an implentation that intersects the results of two queries. This is more
-or less what my first implementation with an intersection looked like, to get
-all upcoming conferences for the next 3 months:
+When you try to filter queries on multiple properties, a `TypeError: Model is
+not immutable` is raised. There are multiple approaches possible to tackle this
+problem, of which I've chosen an implentation that intersects the results of two
+queries. This is more or less what my first implementation with an intersection
+looked like, to get all upcoming conferences for the next 3 months:
 
 ```python
     date_now = datetime.today().date()
