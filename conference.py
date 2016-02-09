@@ -13,6 +13,7 @@ created by wesc on 2014 apr 21
 __author__ = 'wesc+api@google.com (Wesley Chun)'
 
 from datetime import datetime
+from datetime import timedelta
 
 import endpoints
 from protorpc import messages
@@ -397,12 +398,75 @@ class ConferenceApi(remote.Service):
         names = {}
         for profile in profiles:
             names[profile.key.id()] = profile.displayName
+        return names
 
+    @endpoints.method(ConferenceQueryForms, ConferenceForms,
+                      path='conferences/query',
+                      http_method='POST',
+                      name='queryConferences')
+    def queryConferences(self, request):
+        """ Query for conferences.
+        """
+        conferences = self._getQuery(request)
+
+        names = self._getConferenceOrganisers(conferences)
         # return individual ConferenceForm object per Conference
         return ConferenceForms(
             items=[self._copyConferenceToForm(
                 conf, names[conf.organizerUserId]) for conf in conferences]
         )
+
+    # TASK 3
+    @endpoints.method(message_types.VoidMessage, ConferenceForms,
+                      path='conferences/upcoming',
+                      http_method='POST',
+                      name='getUpcomingConferences')
+    def getUpcomingConferences(self, request):
+        """ List all conferences during during the upcoming three months
+        """
+        date_today = datetime.today().date()
+        date_until = (date_today + timedelta(3*365/12))
+
+        confs_from = Conference.query(
+            Conference.endDate >= date_today)
+        confs_till = Conference.query(
+            Conference.startDate <= date_until
+        )
+
+        intersection = set(
+            [c.key.urlsafe() for c in confs_from]) & set(
+            [c.key.urlsafe() for c in confs_till])
+
+        confs = ndb.get_multi(
+            [ndb.Key(urlsafe=item) for item in intersection])
+        names = self._getConferenceOrganisers(confs)
+        return ConferenceForms(
+            items=[self._copyConferenceToForm(
+                conf, names[conf.organizerUserId]) for conf in confs])
+
+    def _intersectQueries(self, q1, q2):
+        """ Return objects according to an intersection of two queries
+        """
+        return ndb.get_multi(
+            set(q1.fetch(keys_only=True))
+            & set(q2.fetch(keys_only=True)))
+
+    @endpoints.method(message_types.VoidMessage, SessionForms,
+                      path='sessions/nonworkshopbefore7',
+                      http_method='GET', name='getNonWorkshopsBeforeSevenPM')
+    def getNonWorkshopsBeforeSevenPM(self, request):
+        """ Only show non-workshop sessions before 7PM
+        """
+        sess_non_workshop = Session.query(
+            Session.typeOfSession != 'WORKSHOP')
+        sess_before_seven_pm = Session.query(
+            Session.startTime < datetime.strptime("19:00", "%H:%M").time())
+
+        results = self._intersectQueries(sess_non_workshop,sess_before_seven_pm)
+
+        return SessionForms(
+            items=[self._copySessionToForm(sess) for sess in results])
+
 
 
 # - - - Session objects - - - - - - - - - - - - - - - - - - -
