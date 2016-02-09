@@ -34,7 +34,8 @@ it will be possible to treat it as a many-to-many relationship.
 
 ```python
 class Session(ndb.Model):
-    """Session object"""
+    """Session object
+    """
     name            = ndb.StringProperty(required=True)
     highlights      = ndb.StringProperty()
     duration        = ndb.IntegerProperty()
@@ -44,7 +45,8 @@ class Session(ndb.Model):
     speakers        = ndb.KeyProperty(kind='Speaker', repeated=True)
 
 class SessionForm(messages.Message):
-    """Outbound form message for Session"""
+    """Outbound form message for Session
+    """
     name            = messages.StringField(1)
     highlights      = messages.StringField(2)
     duration        = messages.IntegerField(3)
@@ -56,7 +58,8 @@ class SessionForm(messages.Message):
 
 
 class SessionForms(messages.Message):
-    """Outbound form message for multiple Session messages"""
+    """Outbound form message for multiple Session messages
+    """
     items = messages.MessageField(SessionForm, 1, repeated=True)
 ```
 
@@ -86,7 +89,8 @@ DRY principle.
 
 ```python
     def _updateSpeakersForSession(self, request, add):
-        """Based on the calling endpoint, add or remove a Speaker."""
+        """Based on the calling endpoint, add or remove a Speaker.
+        """
         session = ndb.Key(urlsafe=request.websafeSessionKey).get()
 
         [...]
@@ -105,13 +109,15 @@ DRY principle.
     @endpoints.method(SESSION_POST_REQUEST_MODIFY_SPEAKERS, SessionForm,
                       http_method='PUT', name='addSpeakerToSession')
     def addSpeakerToSession(self, request):
-        """Add a Speaker to a Session."""
+        """Add a Speaker to a Session.
+        """
         return self._updateSpeakersForSession(request, add=True)
 
     @endpoints.method(SESSION_POST_REQUEST_MODIFY_SPEAKERS, SessionForm,
                       http_method='PUT', name='removeSpeakerFromSession')
     def removeSpeakerFromSession(self, request):
-        """Remove a Speaker from a Session."""
+        """Remove a Speaker from a Session.
+        """
         return self._updateSpeakersForSession(request, add=False)
 ```
 
@@ -190,6 +196,10 @@ This method can be invoked like this:
 Besides the fact that the code has a re-usable component, an other advantage
 (at least in my opinion) is easier to read.
 
+For a lot of datasets this solution will work well enough. For really big
+datasets a solution with the [MapReduce][8] library would probably give a
+better solution. It's a more havyweight approach, yet more scalable.
+
 
 ## Task 4: Add a Task
 
@@ -201,3 +211,4 @@ Besides the fact that the code has a re-usable component, an other advantage
 [5]: https://localhost:8080/
 [6]: https://developers.google.com/appengine/docs/python/endpoints/endpoints_tool
 [7]: https://cloud.google.com/appengine/docs/python/ndb/queries
+[8]: https://cloud.google.com/appengine/docs/python/dataprocessing/
