@@ -24,6 +24,7 @@ App Engine application for the Udacity training course.
 1. (Optional) Generate your client library(ies) with [the endpoints tool][6].
 1. Deploy your application.
 
+
 ## Task 1: Add Sessions to a Conference
 `Session` is implemented as a child of `Conference`, because that will make it
 easier to quickly find all sessions of a conference. `Speaker` is implemented as
@@ -114,6 +115,7 @@ DRY principle.
         return self._updateSpeakersForSession(request, add=False)
 ```
 
+
 ## Task 2: Add Sessions to User Wishlist
 
 The following endpoint methods have been defined:
@@ -125,6 +127,69 @@ The following endpoint methods have been defined:
 
 ## Task 3: Work on indexes and queries
 
+### Query related problem with inequality filtering for multiple properties    |
+
+According to the [docs][7], the Datastore API doesn't support inequality filtering on
+multiple properties:
+
+> Limitations: The Datastore enforces some restrictions on queries. Violating
+> these will cause it to raise exceptions. For example, combining too many
+> filters, using inequalities for multiple properties, or combining an
+> inequality with a sort order on a different property are all currently
+> disallowed. Also filters referencing multiple properties sometimes require
+> secondary indexes to be configured.
+
+There are multiple approaches possible to tackle this problem, of which I've
+chosen an implentation that intersects the results of two queries. This is more
+or less what my first implementation with an intersection looked like, to get
+all upcoming conferences for the next 3 months:
+
+```python
+    date_now = datetime.today().date()
+    date_end = (date_now + timedelta(3*365/12))
+
+    confs_from = Conference.query(
+        Conference.endDate >= date_now)
+    confs_till = Conference.query(
+        Conference.startDate <= date_end
+    )
+
+    intersection = set(
+        [c.key.urlsafe() for c in confs_from]) & set(
+        [c.key.urlsafe() for c in confs_till])
+
+    result = ndb.get_multi(
+        [ndb.Key(urlsafe=item) for item in intersection]
+    )
+```
+
+When I ran into a similar problem for filtering non-workshop sessions that are
+not scheduled after 19:00, I decided to do the intersecting procedure in a
+separate generic method:
+
+```python
+    def _intersectQueries(self, q1, q2):
+        """ Return objects according to an intersection of two queries
+        """
+        return ndb.get_multi(set(
+            q1.fetch(keys_only=True)) & set(
+            q2.fetch(keys_only=True))
+        )
+```
+
+This method can be invoked like this:
+```python
+    non_workshop = Session.query(
+        Session.typeOfSession != 'WORKSHOP')
+    before_seven = Session.query(
+        Session.startTime < datetime.strptime("19:00", "%H:%M").time())
+
+    result = self._intersectQueries(non_workshop,before_seven)
+```
+
+Besides the fact that the code has a re-usable component, an other advantage
+(at least in my opinion) is easier to read.
+
 
 ## Task 4: Add a Task
 
@@ -135,3 +200,4 @@ The following endpoint methods have been defined:
 [4]: https://console.developers.google.com/
 [5]: https://localhost:8080/
 [6]: https://developers.google.com/appengine/docs/python/endpoints/endpoints_tool
+[7]: https://cloud.google.com/appengine/docs/python/ndb/queries
