@@ -425,7 +425,7 @@ class ConferenceApi(remote.Service):
                       http_method='POST',
                       name='getUpcomingConferences')
     def getUpcomingConferences(self, request):
-        """ List all conferences during during the upcoming three months
+        """ List all conferences that will be held in the upcoming three months
         """
         date_today = datetime.today().date()
         date_until = (date_today + timedelta(3*365/12))

@@ -29,7 +29,7 @@ App Engine application for the Udacity training course.
 `Session` is implemented as a child of `Conference`, because that will make it
 easier to quickly find all sessions of a conference. `Speaker` is implemented as
 a separate model, because that will make it easier for re-use and to extend it
-with properties. By using a repeatable `KeyProperty` for speakers of a `Session`,
+with properties. By using a repeatable `KeyProperty` for speakers of a session,
 it will be possible to treat it as a many-to-many relationship.
 
 ```python
@@ -66,26 +66,27 @@ class SessionForms(messages.Message):
 The following endpoint methods have been defined:
 
 - `getConferenceSessions` -- This invokes a generic `_getSessions` method which
-  returns a list of existing Sessions of a conference that matches the given
-  webSafeConferenceKey.
+  returns a list of existing sessions of a conference that matches the given
+  `websafeKey`.
 - `getConferenceSessionsByType` -- This invokes a generic `_getSessions` method
-  which returns a limited list of existing Sessions of a conference that matches
-  the given webSafeConferenceKey. Because in this case the invokation of the
+  which returns a limited list of existing sessions of a conference that matches
+  the given webSafeConferenceKey. Because in this case the invocation of the
   generic `_getSessions` method is done with an extra parameter for filtering on
-  type, it will limit the list Sessions according to the given type.
-- `getSessionsBySpeaker` -- This method returns a list of Sessions accross all
-  conferences, limited to the Sessions where the given speaker is in the list of
+  type, which will be `None` by default, it will limit the list sessions
+  according to the given type.
+- `getSessionsBySpeaker` -- This method returns a list of sessions accross all
+  conferences, limited to the sessions where the given speaker is in the list of
   speakers.
-- `createSession` -- This invokes a `_createSessionObject` method which copies
-  the data from the request to a new Session object.
+- `createSession` -- This invokes a `_createSessionObject` method that copies
+  the data from the request to a new `Session` object.
 
 The `_updateSpeakersForSession` method has been implemented as a generic method,
-to invoke for both adding and removing Speakers of a Session. Like this, the
-endpoints addSpeakerToSession and `removeSpeakerFromSession` can be kept very
-clean. Another generic method is _getSessions, with an optional parameter for
-filtering. This makes it possible to have very light endpoints for specific
-filters, and have the implementation of filtering at one place, according to the
-DRY principle.
+to invoke for both adding and removing speakers of a session. Like this, the
+endpoints `addSpeakerToSession` and `removeSpeakerFromSession` can be kept very
+clean. Another generic method is `_getSessions`, with an optional parameter for
+filtering. This makes it possible to have very lightweight endpoints for
+specific filters, and have the implementation of filtering at one place,
+according to the DRY principle.
 
 ```python
     def _updateSpeakersForSession(self, request, add):
