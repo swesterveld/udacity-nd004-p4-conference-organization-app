@@ -208,8 +208,9 @@ class ConferenceApi(remote.Service):
             data['endDate'] = datetime.strptime(data['endDate'][:10],
                                                 "%Y-%m-%d").date()
 
-        # set seatsAvailable to be same as maxAttendees on creation
-        if data["maxAttendees"] > 0:
+        # set seatsAvailable to be same as maxAttendees, if it's not
+        # filled in on creation
+        if (data["seatsAvailable"] is None) and (data["maxAttendees"] > 0):
             data["seatsAvailable"] = data["maxAttendees"]
         # generate Profile Key based on user ID and Conference
         # ID based on Profile key get Conference key from ID
@@ -411,6 +412,14 @@ class ConferenceApi(remote.Service):
         )
 
     # TASK 3
+    def _intersectQueries(self, q1, q2):
+        """ Return objects according to an intersection of two queries
+        """
+        return ndb.get_multi(
+            set(q1.fetch(keys_only=True))
+            & set(q2.fetch(keys_only=True)))
+
+    # TASK 3
     @endpoints.method(message_types.VoidMessage, ConferenceForms,
                       path='conferences/upcoming',
                       http_method='POST',
@@ -427,42 +436,51 @@ class ConferenceApi(remote.Service):
             Conference.startDate <= date_until
         )
 
-        intersection = set(
-            [c.key.urlsafe() for c in confs_from]) & set(
-            [c.key.urlsafe() for c in confs_till])
-
-        confs = ndb.get_multi(
-            [ndb.Key(urlsafe=item) for item in intersection])
+        confs = self._intersectQueries(confs_from, confs_till)
         names = self._getConferenceOrganisers(confs)
+
         return ConferenceForms(
             items=[self._copyConferenceToForm(
                 conf, names[conf.organizerUserId]) for conf in confs])
 
-    def _intersectQueries(self, q1, q2):
-        """ Return objects according to an intersection of two queries
-        """
-        return ndb.get_multi(
-            set(q1.fetch(keys_only=True))
-            & set(q2.fetch(keys_only=True)))
-
+    # TASK 3
     @endpoints.method(message_types.VoidMessage, SessionForms,
                       path='sessions/nonworkshopbefore7',
                       http_method='GET', name='getNonWorkshopsBeforeSevenPM')
     def getNonWorkshopsBeforeSevenPM(self, request):
         """ Only show non-workshop sessions before 7PM
         """
-        sess_non_workshop = Session.query(
+        non_workshop = Session.query(
             Session.typeOfSession != 'WORKSHOP')
-        sess_before_seven_pm = Session.query(
+        before_seven = Session.query(
             # XXX replace startTime with endTime (which has to be
             # calculated first
             Session.startTime < datetime.strptime("19:00", "%H:%M").time())
 
-        results = self._intersectQueries(
-            sess_non_workshop, sess_before_seven_pm)
+        sessions = self._intersectQueries(non_workshop, before_seven)
 
         return SessionForms(
-            items=[self._copySessionToForm(sess) for sess in results])
+            items=[self._copySessionToForm(sess) for sess in sessions])
+
+    # TASK 3
+    @endpoints.method(message_types.VoidMessage, ConferenceForms,
+                      path='conferences/not_sold_out_in_amsterdam',
+                      http_method='GET',
+                      name='getConferencesNotSoldOutInAmsterdam')
+    def getConferencesNotSoldOutInAmsterdam(self, request):
+        """ Only show conferences in Amsterdam that are not sold out
+        """
+        in_amsterdam = Conference.query(
+            Conference.city == 'Amsterdam')
+        not_sold_out = Conference.query(
+            Conference.seatsAvailable > 0)
+
+        confs = self._intersectQueries(in_amsterdam, not_sold_out)
+        names = self._getConferenceOrganisers(confs)
+
+        return ConferenceForms(
+            items=[self._copyConferenceToForm(
+                conf, names[conf.organizerUserId]) for conf in confs])
 
 # - - - Session objects - - - - - - - - - - - - - - - - - - -
 
