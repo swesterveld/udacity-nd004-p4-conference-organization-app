@@ -126,17 +126,51 @@ DRY principle.
 
 The following endpoint methods have been defined:
 
-- `addSessionToWishlist()` -- 
-- `getSessionsInWishlist()` --
-- `deleteSessionInWishlist()` --
+- `addSessionToWishlist()` -- adds the session to the user's list of sessions
+  they are interested in attending
+- `getSessionsInWishlist()` -- query for all the sessions in a conference that
+  the user is interested in
+- `deleteSessionInWishlist()` -- removes the session from the user’s list of
+  sessions they are interested in attending
 
 
 ## Task 3: Work on indexes and queries
 
+### Come up with 2 additional queries
+
+The following endpoint methods have been defined, with additional queries:
+
+- `getUpcomingConferences` -- query for all conferences that will be
+  held in the upcoming 3 months. This can be useful for users who want to check
+  for conferences that will be held soon, but haven't attracted their attention
+  yet. Or maybe for people who only know on 'short term' if they have time to
+  visit a conference. The inner workings of this method are described in the
+  next section.
+- `getConferencesNotSoldOutInAmsterdam` -- this is a query I would be
+  interested in myself, because I'm living in Amsterdam. Visiting a conference
+  can take a lot of my precious time, especially when it's a conference abroad.
+  And did you ever think about biking from home to the venue in 15 minutes,
+  instead of flying for hours? And leaving from home means sleeping at home,
+  which is a big plus as well :)
+
+  ```
+      in_amsterdam = Conference.query(
+          Conference.city == 'Amsterdam')
+      not_sold_out = Conference.query(
+          Conference.seatsAvailable > 0)
+
+      confs = self._intersectQueries(in_amsterdam, not_sold_out)
+      names = self._getConferenceOrganisers(confs)
+
+      return ConferenceForms(
+          items=[self._copyConferenceToForm(
+              conf, names[conf.organizerUserId]) for conf in confs])
+  ```
+
 ### Query related problem with inequality filtering for multiple properties
 
-According to the [docs][7], the Datastore API doesn't support inequality filtering on
-multiple properties:
+According to the [docs][7], the Datastore API doesn't support inequality
+filtering on multiple properties:
 
 > Limitations: The Datastore enforces some restrictions on queries. Violating
 > these will cause it to raise exceptions. For example, combining too many
@@ -147,9 +181,9 @@ multiple properties:
 
 When you try to filter queries on multiple properties, a `TypeError: Model is
 not immutable` is raised. There are multiple approaches possible to tackle this
-problem, of which I've chosen an implentation that intersects the results of two
-queries. This is more or less what my first implementation with an intersection
-looked like, to get all upcoming conferences for the next 3 months:
+problem, of which I've chosen an implementation that intersects the results of
+two queries. This is more or less what my first implementation with an
+intersection looked like, to get all upcoming conferences for the next 3 months:
 
 ```python
     date_now = datetime.today().date()
@@ -171,7 +205,7 @@ looked like, to get all upcoming conferences for the next 3 months:
 ```
 
 When I ran into a similar problem for filtering non-workshop sessions that are
-not scheduled after 19:00, I decided to do the intersecting procedure in a
+not scheduled after 19:00, I decided to move the intersecting procedure to a
 separate generic method:
 
 ```python
@@ -191,7 +225,7 @@ This method can be invoked like this:
     before_seven = Session.query(
         Session.startTime < datetime.strptime("19:00", "%H:%M").time())
 
-    result = self._intersectQueries(non_workshop,before_seven)
+    sessions = self._intersectQueries(non_workshop,before_seven)
 ```
 
 Besides the fact that the code has a re-usable component, an other advantage
