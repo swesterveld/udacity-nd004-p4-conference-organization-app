@@ -133,6 +133,11 @@ The following endpoint methods have been defined:
 - `deleteSessionInWishlist()` -- removes the session from the user’s list of
   sessions they are interested in attending
 
+The endpoint methods for adding and deleting are implemented on a similar way as
+the previously mentioned methods for adding and deleting speakers. They invoke
+a generic method called `_updateSessionsInWishlist` that will either add or
+delete an item to or from the wishlist, based on a boolean-parameter.
+
 
 ## Task 3: Work on indexes and queries
 
