@@ -153,7 +153,8 @@ The following endpoint methods have been defined, with additional queries:
   instead of flying for hours? And leaving from home means sleeping at home,
   which is a big plus as well :)
 
-  ```
+  This is basicly what the code does:
+  ```python
       in_amsterdam = Conference.query(
           Conference.city == 'Amsterdam')
       not_sold_out = Conference.query(
@@ -166,6 +167,7 @@ The following endpoint methods have been defined, with additional queries:
           items=[self._copyConferenceToForm(
               conf, names[conf.organizerUserId]) for conf in confs])
   ```
+  (some of it is described in the next section)
 
 ### Query related problem with inequality filtering for multiple properties
 
