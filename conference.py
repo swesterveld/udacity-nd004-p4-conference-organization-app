@@ -559,6 +559,9 @@ class ConferenceApi(remote.Service):
                                                   "%H:%M").time()
 
         data['typeOfSession'] = str(data['typeOfSession'])
+        if data['speakers']:
+            data['speakers'] = [ndb.Key(
+                Speaker, speaker) for speaker in data['speakers']]
 
         # generate Conference Key based on websafeConferenceKey and
         # Session ID based on Conference Key and get Session websafe key
