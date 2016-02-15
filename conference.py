@@ -517,7 +517,8 @@ class ConferenceApi(remote.Service):
         user = self.get_authed_user()
         user_id = getUserId(user)
 
-        conf = ndb.Key(urlsafe=request.websafeConferenceKey).get()
+        conf_key = ndb.Key(urlsafe=request.websafeConferenceKey)
+        conf = conf_key.get()
         if not conf:
             raise endpoints.NotFoundException(
                 'No conference found with key {}'.format(
@@ -566,7 +567,6 @@ class ConferenceApi(remote.Service):
         # generate Conference Key based on websafeConferenceKey and
         # Session ID based on Conference Key and get Session websafe key
         # from ID.
-        conf_key = ndb.Key(Conference, request.websafeConferenceKey)
         sess_id = Session.allocate_ids(size=1, parent=conf_key)[0]
         sess_key = ndb.Key(Session, sess_id, parent=conf_key)
         data['key'] = sess_key
