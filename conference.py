@@ -540,8 +540,6 @@ class ConferenceApi(remote.Service):
         # copy SessionForm/ProtoRPC Message into dict
         data = {field.name: getattr(request, field.name)
                 for field in request.all_fields()}
-        del data['websafeKey']
-        del data['websafeConferenceKey']
 
         # add default values for those missing (both data model &
         # outbound Message)
@@ -570,6 +568,9 @@ class ConferenceApi(remote.Service):
         sess_id = Session.allocate_ids(size=1, parent=conf_key)[0]
         sess_key = ndb.Key(Session, sess_id, parent=conf_key)
         data['key'] = sess_key
+
+        del data['websafeKey']
+        del data['websafeConferenceKey']
 
         # create Session, send email to organizer confirming creation of
         # Session and return (modified) SessionForm
