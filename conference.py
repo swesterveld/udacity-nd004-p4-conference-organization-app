@@ -117,11 +117,6 @@ SESSION_POST_REQUEST = endpoints.ResourceContainer(
     websafeConferenceKey=messages.StringField(1),
 )
 
-SPKR_POST_REQUEST = endpoints.ResourceContainer(
-    SpeakerForm,
-    websafeKey=messages.StringField(1),
-    )
-
 GENERIC_WEBSAFEKEY_REQUEST = endpoints.ResourceContainer(
     message_types.VoidMessage,
     websafeKey=messages.StringField(1, required=True),
@@ -743,7 +738,7 @@ class ConferenceApi(remote.Service):
         """
         return self._getSpeakers(request)
 
-    @endpoints.method(SPKR_POST_REQUEST, SpeakerForm,
+    @endpoints.method(SpeakerForm, SpeakerForm,
                       path='speaker',
                       http_method='POST', name='createSpeaker')
     def createSpeaker(self, request):
