@@ -575,25 +575,26 @@ class ConferenceApi(remote.Service):
                       url='/tasks/send_confirmation_email')
         return self._copySessionToForm(session.get())
 
-    def _updateSpeakersForSession(self, request, add):
+    def _updateSpeakerForSession(self, websafeSpeakerKey, websafeSessionKey, add):
         """ Based on the calling endpoint, add or remove a Speaker
         """
-        session = ndb.Key(urlsafe=request.websafeSessionKey).get()
+        session = ndb.Key(urlsafe=websafeSessionKey).get()
         if not session:
             raise endpoints.NotFoundException(
                 'No session found with key: {}'.format(
-                    request.websafeSessionKey
+                    websafeSessionKey
                 )
             )
 
-        spkr_key = ndb.Key(urlsafe=request.websafeSpeakerKey)
+        spkr_key = ndb.Key(urlsafe=websafeSpeakerKey)
         if not spkr_key:
             raise endpoints.NotFoundException(
                 'No speaker found with key: {}'.format(
-                    request.websafeSpeakerKey
+                    websafeSpeakerKey
                 )
             )
 
+        conf_key = session.key.parent()
         if add:
             if spkr_key not in session.speakers:
                 session.speakers.append(spkr_key)
@@ -610,14 +611,22 @@ class ConferenceApi(remote.Service):
     def addSpeakerToSession(self, request):
         """ Add a Speaker to a Session
         """
-        return self._updateSpeakersForSession(request, add=True)
+        session = request.websafeSessionKey
+        speaker = request.websafeSpeakerKey
+        return self._updateSpeakerForSession(websafeSpeakerKey=speaker,
+                                              websafeSessionKey=session,
+                                              add=True)
 
     @endpoints.method(SESSION_POST_REQUEST_MODIFY_SPEAKERS, SessionForm,
                       http_method='PUT', name='removeSpeakerFromSession')
     def removeSpeakerFromSession(self, request):
         """ Remove a Speaker from a Session
         """
-        return self._updateSpeakersForSession(request, add=False)
+        session = request.websafeSessionKey
+        speaker = request.websafeSpeakerKey
+        return self._updateSpeakerForSession(websafeSpeakerKey=speaker,
+                                              websafeSessionKey=session,
+                                              add=False)
 
     def _getSessions(self, wsck, typeFilter=None):
         conf_key = ndb.Key(urlsafe=wsck)
