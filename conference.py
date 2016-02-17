@@ -554,8 +554,18 @@ class ConferenceApi(remote.Service):
 
         data['typeOfSession'] = str(data['typeOfSession'])
         if data['speakers']:
-            data['speakers'] = [ndb.Key(
-                Speaker, speaker) for speaker in data['speakers']]
+            spkr_keys = [ndb.Key(
+                urlsafe=speaker) for speaker in data['speakers']]
+
+            # Update session if there already is a websafeKey
+            if data['websafeKey']:
+                for speaker in spkr_keys:
+                    logging.debug('UPDATING SESSION')
+                    self._updateSpeakerForSession(
+                        websafeSpeakerKey=speaker.urlsafe(),
+                        websafeSessionKey=data['websafeKey'],
+                        add=True)
+            data['speakers'] = spkr_keys
 
         # generate Conference Key based on websafeConferenceKey and
         # Session ID based on Conference Key and get Session websafe key
