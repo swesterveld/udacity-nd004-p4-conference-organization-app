@@ -580,6 +580,15 @@ class ConferenceApi(remote.Service):
         # create Session, send email to organizer confirming creation of
         # Session and return (modified) SessionForm
         session = Session(**data).put()
+
+        # Check if there is more than one session by speakers of this
+        # session.
+        if data['speakers']:
+            for speaker in data['speakers']:
+                in_sessions = self._checkFeaturedSpeaker(speaker, session.key.parent())
+                if len(in_sessions) > 1:
+                    self._setFeaturedSpeaker(speaker, in_sessions)
+
         taskqueue.add(params={'email': user.email(),
                       'sessionInfo': repr(request)},
                       url='/tasks/send_confirmation_email')
@@ -609,12 +618,37 @@ class ConferenceApi(remote.Service):
             if spkr_key not in session.speakers:
                 session.speakers.append(spkr_key)
                 session.put()
+
+                self._checkFeaturedSpeaker(spkr_key, conf_key)
         else:
             if spkr_key in session.speakers:
                 session.speakers.remove(spkr_key)
                 session.put()
 
+        in_sessions = self._checkFeaturedSpeaker(spkr_key, session.key)
+        if in_sessions and len(in_sessions) > 1:
+            self._setFeaturedSpeaker(spkr_key, in_sessions)
+
         return self._copySessionToForm(session)
+
+    def _checkFeaturedSpeaker(self, speaker, conf):
+        # TODO: This should return an mount of sessions for this speaker
+        # at this conference, so it can be used to determine if the
+        # speaker is a featured speaker, both when creating and updating
+        # a session
+        all_sess_by_spkr = Session.query(Session.speakers == speaker)
+        all_sess_of_conf = Session.query(ancestor=conf)
+        intersection = self._intersectQueries(
+            all_sess_by_spkr, all_sess_of_conf)
+        log_values({'all_sess_by_spkr': all_sess_by_spkr, 'all_sess_of_conf': all_sess_of_conf, 'intersection': intersection})
+
+        if intersection:
+            logging.debug('Speaker speaking at multiple sessions during this conference')
+            return intersection
+
+    def _setFeaturedSpeaker(self, speaker, sessions):
+        # TODO: Implement add featured speaker to task queue
+        pass
 
     @endpoints.method(SESSION_POST_REQUEST_MODIFY_SPEAKERS, SessionForm,
                       http_method='PUT', name='addSpeakerToSession')
