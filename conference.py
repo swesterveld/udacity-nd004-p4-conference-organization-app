@@ -625,7 +625,7 @@ class ConferenceApi(remote.Service):
         return self._updateSpeakersForSession(request, add=False)
 
     def _getSessions(self, request, typeFilter=None):
-        conf_key = ndb.Key(Conference, request.websafeKey)
+        conf_key = ndb.Key(urlsafe=request.websafeKey)
 
         if not conf_key:
             raise endpoints.NotFoundException(
