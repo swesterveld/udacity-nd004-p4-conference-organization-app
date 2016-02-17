@@ -619,15 +619,12 @@ class ConferenceApi(remote.Service):
         """
         return self._updateSpeakersForSession(request, add=False)
 
-    def _getSessions(self, request, typeFilter=None):
-        conf_key = ndb.Key(urlsafe=request.websafeKey)
+    def _getSessions(self, wsck, typeFilter=None):
+        conf_key = ndb.Key(urlsafe=wsck)
 
         if not conf_key:
             raise endpoints.NotFoundException(
-                'No conference found with key {}'.format(
-                    request.websafeKey
-                )
-            )
+                'No conference found with key {}'.format(wsck))
 
         sessions = Session.query(ancestor=conf_key)
 
@@ -645,7 +642,7 @@ class ConferenceApi(remote.Service):
     def getConferenceSessions(self, request):
         """ Given a conference with a websafeKey, return all sessions
         """
-        return self._getSessions(request)
+        return self._getSessions(request.websafeKey)
 
     @endpoints.method(SESSION_GET_REQUEST_FILTERED, SessionForms,
                       path='sessions/type/{typeOfSession}',
@@ -658,7 +655,7 @@ class ConferenceApi(remote.Service):
         """
         # XXX Maybe prepare a filter to use for a generic version of
         # _getSessions?
-        return self._getSessions(request, typeFilter=request.typeOfSession)
+        return self._getSessions(request.websafeConferenceKey, typeFilter=request.typeOfSession)
 
     @endpoints.method(SESSION_GET_REQUEST_SPEAKER, SessionForms,
                       path='sessions/speaker/{speaker}',
