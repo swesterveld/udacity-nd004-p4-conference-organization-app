@@ -585,7 +585,8 @@ class ConferenceApi(remote.Service):
         # session.
         if data['speakers']:
             for speaker in data['speakers']:
-                in_sessions = self._checkFeaturedSpeaker(speaker, session.key.parent())
+                in_sessions = self._checkFeaturedSpeaker(
+                    speaker, session.key.parent())
                 if len(in_sessions) > 1:
                     self._setFeaturedSpeaker(speaker, in_sessions)
 
@@ -594,7 +595,8 @@ class ConferenceApi(remote.Service):
                       url='/tasks/send_confirmation_email')
         return self._copySessionToForm(session.get())
 
-    def _updateSpeakerForSession(self, websafeSpeakerKey, websafeSessionKey, add):
+    def _updateSpeakerForSession(self, websafeSpeakerKey, websafeSessionKey,
+                                 add):
         """ Based on the calling endpoint, add or remove a Speaker
         """
         session = ndb.Key(urlsafe=websafeSessionKey).get()
@@ -640,10 +642,8 @@ class ConferenceApi(remote.Service):
         all_sess_of_conf = Session.query(ancestor=conf)
         intersection = self._intersectQueries(
             all_sess_by_spkr, all_sess_of_conf)
-        log_values({'all_sess_by_spkr': all_sess_by_spkr, 'all_sess_of_conf': all_sess_of_conf, 'intersection': intersection})
 
         if intersection:
-            logging.debug('Speaker speaking at multiple sessions during this conference')
             return intersection
 
     def _setFeaturedSpeaker(self, speaker, sessions):
@@ -658,8 +658,8 @@ class ConferenceApi(remote.Service):
         session = request.websafeSessionKey
         speaker = request.websafeSpeakerKey
         return self._updateSpeakerForSession(websafeSpeakerKey=speaker,
-                                              websafeSessionKey=session,
-                                              add=True)
+                                             websafeSessionKey=session,
+                                             add=True)
 
     @endpoints.method(SESSION_POST_REQUEST_MODIFY_SPEAKERS, SessionForm,
                       http_method='PUT', name='removeSpeakerFromSession')
@@ -669,8 +669,8 @@ class ConferenceApi(remote.Service):
         session = request.websafeSessionKey
         speaker = request.websafeSpeakerKey
         return self._updateSpeakerForSession(websafeSpeakerKey=speaker,
-                                              websafeSessionKey=session,
-                                              add=False)
+                                             websafeSessionKey=session,
+                                             add=False)
 
     def _getSessions(self, wsck, typeFilter=None):
         conf_key = ndb.Key(urlsafe=wsck)
@@ -708,7 +708,8 @@ class ConferenceApi(remote.Service):
         """
         # XXX Maybe prepare a filter to use for a generic version of
         # _getSessions?
-        return self._getSessions(request.websafeConferenceKey, typeFilter=request.typeOfSession)
+        return self._getSessions(request.websafeConferenceKey,
+                                 typeFilter=request.typeOfSession)
 
     @endpoints.method(SESSION_GET_REQUEST_SPEAKER, SessionForms,
                       path='sessions/speaker/{speaker}',
