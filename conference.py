@@ -672,7 +672,7 @@ class ConferenceApi(remote.Service):
                                              websafeSessionKey=session,
                                              add=False)
 
-    def _getSessions(self, wsck, typeFilter=None):
+    def _getSessions(self, wsck, typeFilter=None, speakerFilter=None):
         conf_key = ndb.Key(urlsafe=wsck)
 
         if not conf_key:
@@ -684,6 +684,8 @@ class ConferenceApi(remote.Service):
         # Apply filters, if any.
         if typeFilter:
             sessions = sessions.filter(Session.typeOfSession == typeFilter)
+        if speakerFilter:
+            sessions = sessions.filter(Session.speakers == speakerFilter)
 
         return SessionForms(
             items=[self._copySessionToForm(session) for session in sessions]
