@@ -63,6 +63,7 @@ def log_values(d={}):
 EMAIL_SCOPE = endpoints.EMAIL_SCOPE
 API_EXPLORER_CLIENT_ID = endpoints.API_EXPLORER_CLIENT_ID
 MEMCACHE_ANNOUNCEMENTS_KEY = "RECENT_ANNOUNCEMENTS"
+MEMCACHE_FEATURED_KEY_PREFIX = "FEATURED_SPEAKER_"
 ANNOUNCEMENT_TPL = ('Last chance to attend! The following conferences '
                     'are nearly sold out: %s')
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -560,7 +561,6 @@ class ConferenceApi(remote.Service):
             # Update session if there already is a websafeKey
             if data['websafeKey']:
                 for speaker in spkr_keys:
-                    logging.debug('UPDATING SESSION')
                     self._updateSpeakerForSession(
                         websafeSpeakerKey=speaker.urlsafe(),
                         websafeSessionKey=data['websafeKey'],
@@ -585,10 +585,10 @@ class ConferenceApi(remote.Service):
         # session.
         if data['speakers']:
             for speaker in data['speakers']:
-                in_sessions = self._checkFeaturedSpeaker(
+                speaker_schedule = self._getSpeakerSchedule(
                     speaker, session.key.parent())
-                if len(in_sessions) > 1:
-                    self._setFeaturedSpeaker(speaker, in_sessions)
+                if len(speaker_schedule) > 1:
+                    self._updateFeaturedSpeaker(speaker, speaker_schedule, True)
 
         taskqueue.add(params={'email': user.email(),
                       'sessionInfo': repr(request)},
@@ -620,34 +620,43 @@ class ConferenceApi(remote.Service):
             if spkr_key not in session.speakers:
                 session.speakers.append(spkr_key)
                 session.put()
-
-                self._checkFeaturedSpeaker(spkr_key, conf_key)
+                speaker_schedule = self._getSpeakerSchedule(
+                    spkr_key, session.key.parent())
+                if len(speaker_schedule) > 1:
+                    self._updateFeaturedSpeaker(spkr_key, speaker_schedule, True)
         else:
             if spkr_key in session.speakers:
                 session.speakers.remove(spkr_key)
                 session.put()
-
-        in_sessions = self._checkFeaturedSpeaker(spkr_key, session.key)
-        if in_sessions and len(in_sessions) > 1:
-            self._setFeaturedSpeaker(spkr_key, in_sessions)
+                speaker_schedule = self._getSpeakerSchedule(
+                    spkr_key, conf_key)
+                if len(speaker_schedule) < 2:
+                    self._updateFeaturedSpeaker(spkr_key, speaker_schedule, False)
+                # Check if speaker is still a featured speaker
 
         return self._copySessionToForm(session)
 
-    def _checkFeaturedSpeaker(self, speaker, conf):
-        # TODO: This should return an mount of sessions for this speaker
-        # at this conference, so it can be used to determine if the
-        # speaker is a featured speaker, both when creating and updating
-        # a session
+    def _getSpeakerSchedule(self, speaker, conf):
+        """ Return a speaker's schedule
+
+        This will return a schedule with sessions a speaker is scheduled for at
+        the given conference, so it can be sued to determine if the speaker is
+        (still) a featured speaker.
+        """
         all_sess_by_spkr = Session.query(Session.speakers == speaker)
         all_sess_of_conf = Session.query(ancestor=conf)
-        intersection = self._intersectQueries(
-            all_sess_by_spkr, all_sess_of_conf)
+        return self._intersectQueries(all_sess_by_spkr, all_sess_of_conf)
 
-        if intersection:
-            return intersection
-
-    def _setFeaturedSpeaker(self, speaker, sessions):
+    def _updateFeaturedSpeaker(self, speaker, schedule, is_added):
         # TODO: Implement add featured speaker to task queue
+        if is_added:
+            sessions = ', '.join([session.name for session in schedule])
+            announcement = "SPEAKER {} IS FEATURED SPEAKER AT THESE SESSIONS: {}".format(speaker.get().name, sessions)
+            memcache.add(key=MEMCACHE_FEATURED_KEY_PREFIX+speaker.urlsafe(), value=announcement, time=3600)
+        else:
+            sessions = ', '.join([session.name for session in schedule])
+            memcache.delete(MEMCACHE_FEATURED_KEY_PREFIX+speaker.urlsafe())
+
         pass
 
     @endpoints.method(SESSION_POST_REQUEST_MODIFY_SPEAKERS, SessionForm,
