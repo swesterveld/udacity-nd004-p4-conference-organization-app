@@ -1,13 +1,48 @@
-App Engine application for the Udacity training course.
+# Project "Conference Organization App"
 
-## Products
-- [App Engine][1]
+This code is the result I achieved for ***[Udacity Full Stack Web Developer Nanodegree](https://www.udacity.com/course/nd004) - Project 4: Conference Organization App***.
+The app is built in [Python][1] to run on [Google App Engine][2]. [Google Cloud
+Endpoints][3] have been used for the API.
+Instructions on how to run the application can be found in the next section of
+this README text.
 
-## Language
-- [Python][2]
+This code has been *reviewed by me*. According to me, based on the rubric
+used by the Udacity reviewer, this code at least:
+- [x] Meets Specifications: App is architected as a Web Service API.
+- [x] Meets Specifications: App supports a variety of possible front-end
+  clients.
+- [x] Exceeds Specifications: Student implements additional
+  functionality such as an entity for speakers.
+- [x] Exceeds Specifications: The README file includes an explanation of
+  the design decissions behind the additional functionality.
+- [x] Meets Specifications: Student response shows understanding of the
+  process of data modeling and justifies their implementation decisions for
+  the chosen data types
+- [x] Meets Specifications: Users are able to mark sessions they are
+  interested in and retrieve their own current wishlist.
+- [x] Meets Specifications: Users are able to delete a session from
+  their wishlist.
+- [x] Meets Specifications: The README file describes two additional
+  query types that are consistent with the goals of the project.
+- [x] Meets Specifications: Both of the proposed queries are
+  implemented.
+- [x] Meets Specifications: In the README, student describes the reason
+  for the problem with the provided query.
+- [x] Exceeds Specifications: Student has implemented the proposed
+  solution(s) in actual code.
+- [x] Meets Specifications: Student imlplements `getFeaturedSpeaker()`.
+- [x] Meets Specifications: Students uses App Engine's Task Queue when
+  implementing the featured speaker logic.
+- [x] Meets Specifications: Code is ready for personal review and neatly
+  formatted.
+- [x] Meets Specifications: Code follows an intuitive easy-to-follow
+  logical structure.
+- [x] Meets Specifications: Comments are present and effectively explain
+  longer code procedures.
+- [x] Meets Specifications: README file is included.
+- [x] Meets Specifications: The README file provides details of all the
+  steps required to successfully run the application.
 
-## APIs
-- [Google Cloud Endpoints][3]
 
 ## Setup Instructions
 1. Update the value of `application` in `app.yaml` to the app ID you
@@ -23,6 +58,7 @@ App Engine application for the Udacity training course.
    running by visiting your local server's address (by default [localhost:8080][5].)
 1. (Optional) Generate your client library(ies) with [the endpoints tool][6].
 1. Deploy your application.
+
 
 ## Testing
 To test the API endpoints visit [the API explorer][7].
@@ -289,8 +325,8 @@ will search for an entry based on the websafe conferencekey given with the
 request.
 
 
-[1]: https://developers.google.com/appengine
-[2]: http://python.org
+[1]: http://python.org
+[2]: https://developers.google.com/appengine
 [3]: https://developers.google.com/appengine/docs/python/endpoints/
 [4]: https://console.developers.google.com/
 [5]: https://localhost:8080/
