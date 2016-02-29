@@ -625,7 +625,6 @@ class ConferenceApi(remote.Service):
                 session.put()
 
                 speaker_schedule = self._getSpeakerSchedule(spkr_key, conf_key)
-                logging.debug('ADDING schedule: {}'.format(speaker_schedule))
                 if len(speaker_schedule[websafeSpeakerKey]['sessions']) > 1:
                     taskqueue.add(
                         params={
@@ -638,7 +637,6 @@ class ConferenceApi(remote.Service):
                 session.put()
 
                 speaker_schedule = self._getSpeakerSchedule(spkr_key, conf_key)
-                logging.debug('REMOVING schedule: {}'.format(speaker_schedule))
                 if len(speaker_schedule[websafeSpeakerKey]['sessions']) < 2:
                     taskqueue.add(
                         params={
@@ -699,37 +697,13 @@ class ConferenceApi(remote.Service):
         speaker_schedule = json.loads(json_schedule)
         conf_key = ndb.Key(urlsafe=conf)
         cached = memcache.get(MEMCACHE_FEATURED_KEY_PREFIX+conf_key.urlsafe())
-        logging.debug('CACHED: {}'.format(cached))
         if cached:
             featured = json.loads(cached)
         else:
             featured = dict()
 
         speaker_wsk = speaker_schedule.keys()[0]
-        log_values({
-            'method': '_updateFeaturedSpeakers_1',
-            'cached': cached,
-            'conf': conf,
-            'schedule': speaker_schedule,
-            'featured': featured,
-            'speaker_wsk': speaker_wsk
-            })
-        if cached:
-            log_values({
-                'len(cached)': len(cached),
-                'type(cached)': type(cached),
-                })
-        if speaker_schedule:
-            log_values({
-                'len(sessions)': len(
-                    speaker_schedule[speaker_wsk]['sessions']),
-                'type(schedule)': type(speaker_schedule),
-                })
-        if featured:
-            log_values({
-                'len(featured)': len(featured),
-                'type(featured)': type(featured),
-                })
+
         # If the speaker's schedule has more than 1 session in it, we
         # have to make sure the speaker (and its schedule) are part of
         # the list of featured speakers of the given conference.
@@ -742,42 +716,13 @@ class ConferenceApi(remote.Service):
             if speaker_wsk in featured:
                 if speaker_wsk in featured:
                     del featured[speaker_wsk]
-        log_values({
-            'method': '_updateFeaturedSpeakers_2',
-            'cached': cached,
-            'conf': conf,
-            'schedule': speaker_schedule,
-            'featured': featured,
-            'speaker_wsk': speaker_wsk
-            })
-        if cached:
-            log_values({
-                'len(cached)': len(cached),
-                'type(cached)': type(cached),
-                })
-        if speaker_schedule:
-            log_values({
-                'len(sessions)': len(
-                    speaker_schedule[speaker_wsk]['sessions']),
-                'type(schedule)': type(speaker_schedule),
-                })
-        if featured:
-            log_values({
-                'len(featured)': len(featured),
-                'type(featured)': type(featured),
-                })
 
         memcache_key = MEMCACHE_FEATURED_KEY_PREFIX+conf_key.urlsafe()
-        logging.debug("memcache_key: {}".format(memcache_key))
         if featured:
-            logging.debug("Setting featured speaker: {}".format(speaker_wsk))
-            #memcache.set(MEMCACHE_FEATURED_KEY_PREFIX+conf_key.urlsafe(),
             memcache.set(memcache_key,
                          value=json.dumps(featured),
                          time=86400)
         else:
-            logging.debug("Removing featured speaker: {}".format(speaker_wsk))
-            #memcache.delete(MEMCACHE_FEATURED_KEY_PREFIX+conf_key.urlsafe())
             memcache.delete(memcache_key)
 
     @endpoints.method(GENERIC_WEBSAFEKEY_REQUEST, StringMessage,
@@ -787,10 +732,8 @@ class ConferenceApi(remote.Service):
         """ Return featured speakers from memcache as a JSON string
         """
         memcache_key = MEMCACHE_FEATURED_KEY_PREFIX+request.websafeKey
-        logging.debug("memcache_key: {}".format(memcache_key))
         cache = memcache.get(memcache_key)
         featured = cache or "{}"
-        logging.debug("featured: {}".format(featured))
         return StringMessage(data=featured)
 
     @endpoints.method(SESSION_POST_REQUEST_MODIFY_SPEAKERS, SessionForm,

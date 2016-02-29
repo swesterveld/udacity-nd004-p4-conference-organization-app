@@ -16,7 +16,6 @@ import webapp2
 from google.appengine.api import app_identity
 from google.appengine.api import mail
 from conference import ConferenceApi
-import logging
 
 
 class SetAnnouncementHandler(webapp2.RequestHandler):
@@ -44,9 +43,6 @@ class SetFeaturedSpeakerHandler(webapp2.RequestHandler):
     def post(self):
         """ Check if speaker is featured speaker
         """
-        logging.debug('conf: {}\nschedule: {}'.format(
-            self.request.get('conf_wsk'),
-            self.request.get('schedule')))
         ConferenceApi._updateFeaturedSpeakers(
             self.request.get('conf_wsk'),
             self.request.get('schedule'))
