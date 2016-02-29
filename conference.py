@@ -677,7 +677,9 @@ class ConferenceApi(remote.Service):
         session = Session(**data).put()
 
         # Check if there is more than one session by speakers of this
-        # session.
+        # session. Speakers that are speaking at more than one session
+        # of the same conference are featured speakers, and should be
+        # added to a Memcache entry for featured speakers. (TASK 4)
         if data['speakers']:
             for speaker in data['speakers']:
                 schedule = self._getSpeakerSchedule(speaker, conf_key)
