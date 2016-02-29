@@ -8,40 +8,45 @@ this README text.
 
 This code has been *reviewed by me*. According to me, based on the rubric
 used by the Udacity reviewer, this code at least:
-- [x] Meets Specifications: App is architected as a Web Service API.
+- [x] Meets Specifications: App is architected as a Web Service API. (App
+  Architecture)
 - [x] Meets Specifications: App supports a variety of possible front-end
-  clients.
+  clients. (App Architecture)
 - [x] Exceeds Specifications: Student implements additional
-  functionality such as an entity for speakers.
+  functionality such as an entity for speakers. (Task 1: Design Choices)
 - [x] Exceeds Specifications: The README file includes an explanation of
-  the design decissions behind the additional functionality.
+  the design decissions behind the additional functionality. (Task 1: Design
+  Choices)
 - [x] Meets Specifications: Student response shows understanding of the
   process of data modeling and justifies their implementation decisions for
-  the chosen data types
+  the chosen data types. (Task 1: Design Choices)
 - [x] Meets Specifications: Users are able to mark sessions they are
-  interested in and retrieve their own current wishlist.
+  interested in and retrieve their own current wishlist. (Task 2: Session
+  Wishlist)
 - [x] Meets Specifications: Users are able to delete a session from
-  their wishlist.
+  their wishlist. (Task 2: Session Wishlist)
 - [x] Meets Specifications: The README file describes two additional
-  query types that are consistent with the goals of the project.
+  query types that are consistent with the goals of the project. (Task 3:
+  Additional Queries)
 - [x] Meets Specifications: Both of the proposed queries are
-  implemented.
+  implemented. (Task 3: Additional Queries)
 - [x] Meets Specifications: In the README, student describes the reason
-  for the problem with the provided query.
+  for the problem with the provided query. (Task 3: Additional Queries)
 - [x] Exceeds Specifications: Student has implemented the proposed
-  solution(s) in actual code.
-- [x] Meets Specifications: Student imlplements `getFeaturedSpeaker()`.
+  solution(s) in actual code. (Task 3: Additional Queries)
+- [x] Meets Specifications: Student imlplements `getFeaturedSpeaker()`. (Task 4:
+  Featured Speaker)
 - [x] Meets Specifications: Students uses App Engine's Task Queue when
-  implementing the featured speaker logic.
+  implementing the featured speaker logic. (Task 4: Featured Speaker)
 - [x] Meets Specifications: Code is ready for personal review and neatly
-  formatted.
+  formatted. (Code Quality)
 - [x] Meets Specifications: Code follows an intuitive easy-to-follow
-  logical structure.
+  logical structure. (Code Readability)
 - [x] Meets Specifications: Comments are present and effectively explain
-  longer code procedures.
-- [x] Meets Specifications: README file is included.
+  longer code procedures. (Code Readability)
+- [x] Meets Specifications: README file is included. (Documentation)
 - [x] Meets Specifications: The README file provides details of all the
-  steps required to successfully run the application.
+  steps required to successfully run the application. (Documentation)
 
 
 ## Setup Instructions
