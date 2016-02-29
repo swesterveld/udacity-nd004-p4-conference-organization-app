@@ -479,6 +479,99 @@ class ConferenceApi(remote.Service):
             items=[self._copyConferenceToForm(
                 conf, names[conf.organizerUserId]) for conf in confs])
 
+    # TASK 4
+    def _getSpeakerSchedule(self, speaker, conf):
+        """ Return a speaker's schedule
+
+        This will return a schedule with sessions a speaker is scheduled for at
+        the given conference, so it can be used to determine wether the speaker
+        is (still) a featured speaker or not.
+
+        The schedule is a dict with the speaker's websafe key as its only key.
+        The value for this key is a dictionary with keys for 'name' and
+        'sessions', where the value for 'name' is the speaker's name, and the
+        value for 'sessions' has a dictionary with sessions' websafe keys and
+        titles as its items.
+
+        So, a schedule will look like this:
+
+            featured[<speaker_wsk>] = {
+                'name': '<name>',
+                'sessions': {
+                    <session_wsk>: <session_title>,
+                    <session_wsk>: <session_title>,
+                }
+            }
+        """
+        all_sess_by_spkr = Session.query(Session.speakers == speaker)
+        all_sess_of_conf = Session.query(ancestor=conf)
+        sessions = self._intersectQueries(all_sess_by_spkr, all_sess_of_conf)
+
+        speaker_schedule = {
+            speaker.urlsafe(): {
+                'name': speaker.get().name,
+                'sessions': {
+                    session.key.urlsafe(): session.name for session in sessions
+                }
+            }
+        }
+        log_values({
+            'SCHEDULE': speaker_schedule,
+            'len(sessions)': len(sessions)
+            })
+        return speaker_schedule
+
+    # TASK 4
+    @staticmethod
+    def _updateFeaturedSpeakers(conf, json_schedule):
+        """ Update list of featured speakers
+
+        This will update the list of featured speakers, based on a given
+        conference and a new schedule of a certain speaker.
+        """
+        speaker_schedule = json.loads(json_schedule)
+        conf_key = ndb.Key(urlsafe=conf)
+        cached = memcache.get(MEMCACHE_FEATURED_KEY_PREFIX+conf_key.urlsafe())
+        if cached:
+            featured = json.loads(cached)
+        else:
+            featured = dict()
+
+        speaker_wsk = speaker_schedule.keys()[0]
+
+        # If the speaker's schedule has more than 1 session in it, we
+        # have to make sure the speaker (and its schedule) are part of
+        # the list of featured speakers of the given conference.
+        if len(speaker_schedule[speaker_wsk]['sessions']) > 1:
+            featured[speaker_wsk] = speaker_schedule[speaker_wsk]
+        # Else we have to make sure the speaker (and its schedule) are
+        # not part of the list of featured speakers of the given
+        # conference.
+        else:
+            if speaker_wsk in featured:
+                if speaker_wsk in featured:
+                    del featured[speaker_wsk]
+
+        memcache_key = MEMCACHE_FEATURED_KEY_PREFIX+conf_key.urlsafe()
+        if featured:
+            memcache.set(memcache_key,
+                         value=json.dumps(featured),
+                         time=86400)
+        else:
+            memcache.delete(memcache_key)
+
+    # TASK 4
+    @endpoints.method(GENERIC_WEBSAFEKEY_REQUEST, StringMessage,
+                      path='speakers/featured',
+                      http_method='POST', name='getFeaturedSpeaker')
+    def getFeaturedSpeaker(self, request):
+        """ Return featured speakers from memcache as a JSON string
+        """
+        memcache_key = MEMCACHE_FEATURED_KEY_PREFIX+request.websafeKey
+        cache = memcache.get(memcache_key)
+        featured = cache or "{}"
+        return StringMessage(data=featured)
+
 # - - - Session objects - - - - - - - - - - - - - - - - - - -
 
     def _copySessionToForm(self, session):
@@ -645,96 +738,6 @@ class ConferenceApi(remote.Service):
                         url='/tasks/set_featured_speakers')
 
         return self._copySessionToForm(session)
-
-    def _getSpeakerSchedule(self, speaker, conf):
-        """ Return a speaker's schedule
-
-        This will return a schedule with sessions a speaker is scheduled for at
-        the given conference, so it can be used to determine wether the speaker
-        is (still) a featured speaker or not.
-
-        The schedule is a dict with the speaker's websafe key as its only key.
-        The value for this key is a dictionary with keys for 'name' and
-        'sessions', where the value for 'name' is the speaker's name, and the
-        value for 'sessions' has a dictionary with sessions' websafe keys and
-        titles as its items.
-
-        So, a schedule will look like this:
-
-            featured[<speaker_wsk>] = {
-                'name': '<name>',
-                'sessions': {
-                    <session_wsk>: <session_title>,
-                    <session_wsk>: <session_title>,
-                }
-            }
-        """
-        all_sess_by_spkr = Session.query(Session.speakers == speaker)
-        all_sess_of_conf = Session.query(ancestor=conf)
-        sessions = self._intersectQueries(all_sess_by_spkr, all_sess_of_conf)
-
-        speaker_schedule = {
-            speaker.urlsafe(): {
-                'name': speaker.get().name,
-                'sessions': {
-                    session.key.urlsafe(): session.name for session in sessions
-                }
-            }
-        }
-        log_values({
-            'SCHEDULE': speaker_schedule,
-            'len(sessions)': len(sessions)
-            })
-        return speaker_schedule
-
-    @staticmethod
-    def _updateFeaturedSpeakers(conf, json_schedule):
-        """ Update list of featured speakers
-
-        This will update the list of featured speakers, based on a given
-        conference and a new schedule of a certain speaker.
-        """
-        speaker_schedule = json.loads(json_schedule)
-        conf_key = ndb.Key(urlsafe=conf)
-        cached = memcache.get(MEMCACHE_FEATURED_KEY_PREFIX+conf_key.urlsafe())
-        if cached:
-            featured = json.loads(cached)
-        else:
-            featured = dict()
-
-        speaker_wsk = speaker_schedule.keys()[0]
-
-        # If the speaker's schedule has more than 1 session in it, we
-        # have to make sure the speaker (and its schedule) are part of
-        # the list of featured speakers of the given conference.
-        if len(speaker_schedule[speaker_wsk]['sessions']) > 1:
-            featured[speaker_wsk] = speaker_schedule[speaker_wsk]
-        # Else we have to make sure the speaker (and its schedule) are
-        # not part of the list of featured speakers of the given
-        # conference.
-        else:
-            if speaker_wsk in featured:
-                if speaker_wsk in featured:
-                    del featured[speaker_wsk]
-
-        memcache_key = MEMCACHE_FEATURED_KEY_PREFIX+conf_key.urlsafe()
-        if featured:
-            memcache.set(memcache_key,
-                         value=json.dumps(featured),
-                         time=86400)
-        else:
-            memcache.delete(memcache_key)
-
-    @endpoints.method(GENERIC_WEBSAFEKEY_REQUEST, StringMessage,
-                      path='speakers/featured',
-                      http_method='POST', name='getFeaturedSpeaker')
-    def getFeaturedSpeaker(self, request):
-        """ Return featured speakers from memcache as a JSON string
-        """
-        memcache_key = MEMCACHE_FEATURED_KEY_PREFIX+request.websafeKey
-        cache = memcache.get(memcache_key)
-        featured = cache or "{}"
-        return StringMessage(data=featured)
 
     @endpoints.method(SESSION_POST_REQUEST_MODIFY_SPEAKERS, SessionForm,
                       http_method='PUT', name='addSpeakerToSession')
