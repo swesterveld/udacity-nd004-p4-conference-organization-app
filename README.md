@@ -24,6 +24,9 @@ App Engine application for the Udacity training course.
 1. (Optional) Generate your client library(ies) with [the endpoints tool][6].
 1. Deploy your application.
 
+## Testing
+To test the API endpoints visit [the API explorer][7].
+
 
 ## Task 1: Add Sessions to a Conference
 `Session` is implemented as a child of `Conference`, because that will make it
@@ -177,7 +180,7 @@ The following endpoint methods have been defined, with additional queries:
 
 ### Query related problem with inequality filtering for multiple properties
 
-According to the [docs][7], the Datastore API doesn't support inequality
+According to the [docs][8], the Datastore API doesn't support inequality
 filtering on multiple properties:
 
 > Limitations: The Datastore enforces some restrictions on queries. Violating
@@ -240,11 +243,50 @@ Besides the fact that the code has a re-usable component, an other advantage
 (at least in my opinion) is easier to read.
 
 For a lot of datasets this solution will work well enough. For really big
-datasets a solution with the [MapReduce][8] library would probably give a
+datasets a solution with the [MapReduce][9] library would probably give a
 better solution. It's a more havyweight approach, yet more scalable.
 
 
 ## Task 4: Add a Task
+
+When a new session is added to a conference, the schedule of its speakers is
+checked. A schedule is is represented in a dictionary like:
+```python
+    {
+        'name': <speaker_name>,
+        'sessions': {
+            <session_websafekey>: <session_name>,
+            <session_websafekey>: <session_name>,
+            ...
+        }
+    }
+```
+
+If a speaker is speaking at more than one session  at the same conference --
+when the length of the embedded dictionary 'sessions' is bigger than one -- the
+speaker is set as a featured speaker. Featured speakers will be safed in a
+Memcache entry specific for the conference, which will be done by using App
+Engine's Task Queue mechanism.
+The key for such an entry is dynamically constructed with a constant prefix
+followed by the conference's websafe key:
+`FEATURED_SPEAKER_<conference_websafekey>`.
+The entry itself holds a JSON representation of a dictionary with schedules of
+the featured speakers in a conference, which looks like:
+like:
+```python
+    {
+        <speaker_websafekey>: <speaker_schedule>,
+        ...
+    }
+```
+
+This way the dictionary has (unique) websafe keys that could eventually be used
+for querying, and human readable data to easily construct a sentence like
+"Speaker X is featured speaker at the conference. The sessions he will be
+speaking at are titled Y and Z."
+The endpoint to check for featured speakers is `getFeaturedSpeaker()`, which
+will search for an entry based on the websafe conferencekey given with the
+request.
 
 
 [1]: https://developers.google.com/appengine
@@ -253,5 +295,6 @@ better solution. It's a more havyweight approach, yet more scalable.
 [4]: https://console.developers.google.com/
 [5]: https://localhost:8080/
 [6]: https://developers.google.com/appengine/docs/python/endpoints/endpoints_tool
-[7]: https://cloud.google.com/appengine/docs/python/ndb/queries
-[8]: https://cloud.google.com/appengine/docs/python/dataprocessing/
+[7]: https://ud858conferencecentral.appspot.com/_ah/api/explorer
+[8]: https://cloud.google.com/appengine/docs/python/ndb/queries
+[9]: https://cloud.google.com/appengine/docs/python/dataprocessing/
